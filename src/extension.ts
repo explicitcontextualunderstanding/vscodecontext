@@ -2,6 +2,14 @@ import * as vscode from 'vscode';
 
 let extensionContext: vscode.ExtensionContext;
 
+/**
+ * Main extension activation function
+ * @param context - The extension context provided by VSCode
+ * @remarks
+ * - Registers event listeners for editor and window state changes
+ * - Registers commands for context extraction and terminal operations
+ * - Manages extension subscriptions
+ */
 export function activate(context: vscode.ExtensionContext): void {
   extensionContext = context;
   console.log('Congratulations, your extension "vscode-context" is now active!');
@@ -19,6 +27,13 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   // Command registration
+  /**
+   * Command to extract and display current VSCode context
+   * @remarks
+   * - Creates an output channel to display the context data
+   * - Collects all context information using getAllContext()
+   * - Formats and displays the data in JSON format
+   */
   const extractContextCommand = vscode.commands.registerCommand(
     'vscode-context.extractContext',
     async () => {
@@ -38,6 +53,13 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   );
 
+  /**
+   * Command to create and configure a terminal instance
+   * @remarks
+   * - Creates a terminal named 'Cline Terminal'
+   * - Automatically shows the terminal
+   * - Sends an initial greeting message
+   */
   const createTerminalCommand = vscode.commands.registerCommand(
     'vscode-context.createTerminal',
     () => {
@@ -58,6 +80,20 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {}
 
+/**
+ * Gathers comprehensive context information about the current VSCode environment
+ * @returns Promise resolving to an object containing all collected context data
+ * @remarks
+ * Combines data from:
+ * - Workspace configuration and files
+ * - Window state and editors
+ * - Language features and diagnostics
+ * - Debug sessions
+ * - Source control
+ * - Tasks
+ * - Extension configuration
+ * - Extension host environment
+ */
 async function getAllContext(): Promise<Record<string, unknown>> {
   return {
     workspace: await getWorkspaceContext(),
@@ -76,6 +112,17 @@ async function getAllContext(): Promise<Record<string, unknown>> {
   };
 }
 
+/**
+ * Gathers information about the extension host environment
+ * @returns Object containing system and process information
+ * @remarks
+ * Includes:
+ * - Process ID and execution path
+ * - Command line arguments
+ * - Environment variables (keys only)
+ * - Platform and architecture details
+ * - Node.js version information
+ */
 function getExtensionHostContext(): Record<string, unknown> {
   return {
     processId: process.pid,
@@ -89,6 +136,20 @@ function getExtensionHostContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Retrieves workspace settings configuration
+ * @returns Object containing categorized settings
+ * @remarks
+ * Includes settings from:
+ * - Workspace
+ * - Editor
+ * - Files
+ * - Search
+ * - Debug
+ * - Terminal
+ * - Window
+ * - Extensions
+ */
 function getSettingsContext(): Record<string, unknown> {
   const settings = vscode.workspace.getConfiguration();
   return {
