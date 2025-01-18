@@ -74,11 +74,6 @@ function activate(context) {
         outputChannel.appendLine(JSON.stringify(contextData, null, 2));
         outputChannel.show(true);
     });
-    /**
-     * Sample command demonstrating command execution
-     * @remarks
-     * - Executes the quick open command as an example
-     */
     const executeSampleCommand = vscode.commands.registerCommand('vscode-context.executeSample', async () => {
         await vscode.commands.executeCommand('workbench.action.quickOpen');
     });
@@ -96,11 +91,6 @@ function activate(context) {
     });
     context.subscriptions.push(extractContextCommand, executeSampleCommand, createTerminalCommand, onDidChangeActiveTextEditor, onDidChangeWindowState);
 }
-/**
- * Extension deactivation function
- * @remarks
- * Currently empty as no cleanup is needed
- */
 function deactivate() { }
 /**
  * Gathers comprehensive context information about the current VSCode environment
@@ -183,23 +173,9 @@ function getSettingsContext() {
         extensions: settings.get('extensions'),
     };
 }
-/**
- * Gathers information about configured keybindings
- * @returns Array of keybinding configurations
- * @remarks
- * Currently returns empty array as implementation is pending
- */
 function getKeybindingsContext() {
     return [];
 }
-/**
- * Gathers information about the current theme and color customizations
- * @returns Object containing theme context data
- * @remarks
- * Includes:
- * - Current theme kind (Light/Dark/High Contrast)
- * - Color customizations from workbench settings
- */
 function getThemeContext() {
     const theme = vscode.window.activeColorTheme;
     return {
@@ -211,15 +187,6 @@ function getThemeContext() {
         customizations: vscode.workspace.getConfiguration('workbench').get('colorCustomizations'),
     };
 }
-/**
- * Gathers information about visible text editors and their view columns
- * @returns Object containing views context data
- * @remarks
- * Includes:
- * - Visible text editors and their view columns
- * - Active view column information
- * - Document URIs and language IDs
- */
 function getViewsContext() {
     const editors = vscode.window.visibleTextEditors;
     return {
@@ -234,15 +201,6 @@ function getViewsContext() {
         activeViewColumn: vscode.window.activeTextEditor?.viewColumn,
     };
 }
-/**
- * Gathers information about custom editors in the workspace
- * @returns Array of objects containing custom editor context data
- * @remarks
- * Includes:
- * - Custom editor URIs and schemes
- * - Language IDs and view columns
- * - Filters out standard file and untitled scheme editors
- */
 function getCustomEditorsContext() {
     const customEditors = vscode.window.visibleTextEditors.filter((editor) => editor.document.uri.scheme !== 'file' && editor.document.uri.scheme !== 'untitled');
     return customEditors.map((editor) => ({
@@ -252,16 +210,6 @@ function getCustomEditorsContext() {
         viewColumn: editor.viewColumn,
     }));
 }
-/**
- * Gathers workspace-related context information
- * @returns Promise resolving to an object containing workspace context data
- * @remarks
- * Includes:
- * - Workspace folders and their URIs
- * - File system content of the root directory
- * - Recent files and their states
- * - Workspace configuration settings
- */
 async function getWorkspaceContext() {
     const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
     const fsContent = rootUri ? await vscode.workspace.fs.readDirectory(rootUri) : [];
@@ -291,15 +239,6 @@ async function getWorkspaceContext() {
         configuration: getConfig(),
     };
 }
-/**
- * Retrieves workspace configuration settings
- * @returns Object containing categorized configuration settings
- * @remarks
- * Includes settings from:
- * - Editor (font size, tab size, etc.)
- * - Files (auto-save, excludes, etc.)
- * - Search (excludes, symlinks, etc.)
- */
 function getConfig() {
     const editorConfig = vscode.workspace.getConfiguration('editor');
     const filesConfig = vscode.workspace.getConfiguration('files');
@@ -623,7 +562,8 @@ async function getTasksContext() {
             })),
         };
     }
-    catch {
+    catch (error) {
+        console.error('Error fetching tasks:', error);
         return {
             tasks: 'Error fetching tasks',
         };

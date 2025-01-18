@@ -57,6 +57,25 @@ The extension can be configured through VSCode settings:
 
 ## Development
 
+### Virtual Environment Setup
+
+The development environment requires a Python virtual environment (.venv) located in your workspace directory. The system will prompt you for the location of your .venv directory when needed.
+
+To activate the virtual environment:
+```bash
+source /path/to/workspace/.venv/bin/activate
+```
+
+### Development Workflow
+
+The extension uses a modern development workflow with:
+
+- **TypeScript** for type-safe development
+- **Webpack** for optimized production builds
+- **ESLint** for code quality
+- **Prettier** for code formatting
+- **Python Virtual Environment** for dependency isolation
+
 ### Building the Extension
 
 1. Clone the repository:
@@ -70,23 +89,40 @@ cd vscode-context
 npm install
 ```
 
-3. Compile TypeScript:
+3. Activate virtual environment:
 ```bash
-npm run compile
+source /path/to/workspace/.venv/bin/activate
 ```
 
-4. Package extension:
+4. Run the development build:
+```bash
+npm run build
+```
+
+5. Package extension:
 ```bash
 npx vsce package
 ```
 
 ### Development Commands
 
+All development commands should be run within the activated virtual environment:
+
 | Command | Description |
 |---------|-------------|
-| `npm run watch` | Auto-compile on changes |
+| `npm run build` | Build production bundle using webpack |
+| `npm run watch` | Watch and rebuild on changes |
 | `npm run lint` | Run ESLint checks |
 | `npm run format` | Format code with Prettier |
+| `npm run lint:markdown` | Lint markdown files |
+
+### Optimized Build Process
+
+The extension uses webpack to:
+- Bundle all dependencies into a single optimized file
+- Tree-shake unused code
+- Minify production builds
+- Generate source maps for debugging
 
 ## Contributing
 
