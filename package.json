@@ -1,7 +1,7 @@
 {
   "name": "vscode-context",
   "version": "0.0.6",
-  "type": "module",
+  "type": "commonjs",
   "publisher": "your-name",
   "repository": {
     "type": "git",
@@ -13,7 +13,7 @@
   "dependencies": {
     "generator-code": "^1.11.5"
   },
-  "main": "./out/extension.js",
+  "main": "./out/extension.cjs",
   "activationEvents": [
     "onCommand:vscode-context.extractContext"
   ],
