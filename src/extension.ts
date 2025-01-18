@@ -265,6 +265,14 @@ async function getWorkspaceContext(): Promise<Record<string, unknown>> {
   const fsContent = rootUri ? await vscode.workspace.fs.readDirectory(rootUri) : [];
 
   // Get recent files
+  /**
+   * Interface representing a recently opened file
+   * @remarks
+   * Contains:
+   * - File URI
+   * - Language ID
+   * - Dirty state (whether file has unsaved changes)
+   */
   interface RecentFile {
     uri: string;
     languageId: string;
@@ -658,6 +666,15 @@ async function getTasksContext(): Promise<Record<string, unknown>> {
   }
 }
 
+/**
+ * Interface representing the structure of package.json
+ * @remarks
+ * Contains essential metadata about the extension including:
+ * - Name and version
+ * - Publisher and display name
+ * - Description and activation events
+ * - Main entry point and engine requirements
+ */
 interface PackageJson {
   name: string;
   version: string;
