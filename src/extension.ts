@@ -74,12 +74,301 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   );
 
+  // Add debug context monitoring
+  const onDidStartDebugSession = vscode.debug.onDidStartDebugSession((session) => {
+    console.log('Debug session started:', session.name);
+  });
+
+  const onDidTerminateDebugSession = vscode.debug.onDidTerminateDebugSession((session) => {
+    console.log('Debug session terminated:', session.name);
+  });
+
+  const onDidChangeBreakpoints = vscode.debug.onDidChangeBreakpoints((e) => {
+    console.log('Breakpoints changed:', e.added, e.removed, e.changed);
+  });
+
+  // Add window state tracking
+  const onDidChangeTextEditorSelection = vscode.window.onDidChangeTextEditorSelection(
+    (e: vscode.TextEditorSelectionChangeEvent) => {
+      console.log('Text editor selection changed:', e.textEditor.document.uri);
+    },
+  );
+
+  const onDidChangeTextEditorVisibleRanges = vscode.window.onDidChangeTextEditorVisibleRanges(
+    (e: vscode.TextEditorVisibleRangesChangeEvent) => {
+      console.log('Text editor visible ranges changed:', e.textEditor.document.uri);
+    },
+  );
+
+  const onDidChangeTextEditorViewColumn = vscode.window.onDidChangeTextEditorViewColumn(
+    (e: vscode.TextEditorViewColumnChangeEvent) => {
+      console.log('Text editor view column changed:', e.textEditor.document.uri);
+    },
+  );
+
+  // Add language feature monitoring
+  const onDidChangeDiagnostics = vscode.languages.onDidChangeDiagnostics(
+    (e: vscode.DiagnosticChangeEvent) => {
+      console.log(
+        'Diagnostics changed:',
+        e.uris.map((uri: vscode.Uri) => uri.toString()),
+      );
+    },
+  );
+
+  // Add extension context usage
+  const onDidChangeExtensions = vscode.extensions.onDidChange(() => {
+    console.log('Extensions changed');
+  });
+
+  // Add workspace file monitoring
+  const onDidCreateFiles = vscode.workspace.onDidCreateFiles((e: vscode.FileCreateEvent) => {
+    console.log(
+      'Files created:',
+      e.files.map((f: vscode.Uri) => f.toString()),
+    );
+  });
+
+  const onDidDeleteFiles = vscode.workspace.onDidDeleteFiles((e: vscode.FileDeleteEvent) => {
+    console.log(
+      'Files deleted:',
+      e.files.map((f: vscode.Uri) => f.toString()),
+    );
+  });
+
+  const onDidRenameFiles = vscode.workspace.onDidRenameFiles((e: vscode.FileRenameEvent) => {
+    console.log(
+      'Files renamed:',
+      e.files.map((f) => `${f.oldUri} -> ${f.newUri}`),
+    );
+  });
+
+  // Add configuration monitoring
+  const onDidChangeConfiguration = vscode.workspace.onDidChangeConfiguration(() => {
+    console.log('Configuration changed');
+  });
+
+  const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(
+    (e: vscode.TextDocumentChangeEvent) => {
+      console.log('Text document changed:', e.document.uri);
+    },
+  );
+
+  const onDidChangeWorkspaceFolders = vscode.workspace.onDidChangeWorkspaceFolders(
+    (e: vscode.WorkspaceFoldersChangeEvent) => {
+      console.log(
+        'Workspace folders changed:',
+        e.added.map((folder) => folder.uri.toString()),
+        e.removed.map((folder) => folder.uri.toString()),
+      );
+    },
+  );
+
+  interface CommandRegistration {
+    disposable: vscode.Disposable;
+    registrationTime: string;
+  }
+
+  interface CommandExecutionRecord {
+    id: string;
+    timestamp: string;
+    parameters: unknown[];
+    durationMs?: number;
+    success?: boolean;
+    error?: unknown;
+  }
+
+  interface TerminalInfo {
+    terminal: vscode.Terminal;
+    creationTime: string;
+    lastActivity: string;
+    inputCount: number;
+    outputCount: number;
+  }
+
+  interface TerminalHistoryRecord {
+    name: string;
+    creationTime: string;
+    lastActivity: string;
+    inputCount: number;
+    outputCount: number;
+    lifetimeMs: number;
+  }
+
+  const commandTracker = {
+    registered: new Map<string, CommandRegistration>(),
+    executed: [] as CommandExecutionRecord[],
+  };
+
+  const terminalTracker = {
+    active: new Map<string, TerminalInfo>(),
+    history: [] as TerminalHistoryRecord[],
+  };
+
+  // Track terminal creation and activity
+  const onDidCreateTerminal = vscode.window.onDidOpenTerminal((terminal) => {
+    const terminalInfo: TerminalInfo = {
+      terminal,
+      creationTime: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+      inputCount: 0,
+      outputCount: 0,
+    };
+    terminalTracker.active.set(terminal.name, terminalInfo);
+
+    // Track terminal closing
+    const closeDisposable = vscode.window.onDidCloseTerminal((closedTerminal) => {
+      if (closedTerminal.name === terminal.name) {
+        const info = terminalTracker.active.get(terminal.name);
+        if (info) {
+          const creationTime = new Date(info.creationTime);
+          const closeTime = new Date();
+          const lifetimeMs = closeTime.getTime() - creationTime.getTime();
+          
+          terminalTracker.history.push({
+            name: terminal.name,
+            creationTime: info.creationTime,
+            lastActivity: info.lastActivity,
+            inputCount: info.inputCount,
+            outputCount: info.outputCount,
+            lifetimeMs,
+          });
+          
+          terminalTracker.active.delete(terminal.name);
+        }
+      }
+    });
+
+    context.subscriptions.push(closeDisposable);
+  });
+
+  // Track terminal destruction with lifetime calculation
+  const onDidCloseTerminal = vscode.window.onDidCloseTerminal((terminal) => {
+    const terminalInfo = terminalTracker.active.get(terminal.name);
+    if (terminalInfo) {
+      const creationTime = new Date(terminalInfo.creationTime);
+      const closeTime = new Date();
+      const lifetimeMs = closeTime.getTime() - creationTime.getTime();
+      
+      terminalTracker.history.push({
+        name: terminal.name,
+        creationTime: terminalInfo.creationTime,
+        lastActivity: terminalInfo.lastActivity,
+        inputCount: terminalInfo.inputCount,
+        outputCount: terminalInfo.outputCount,
+        lifetimeMs,
+      });
+      
+      terminalTracker.active.delete(terminal.name);
+    }
+  });
+
+  // Enhanced command registration tracking
+  const originalRegisterCommand = vscode.commands.registerCommand;
+  vscode.commands.registerCommand = function(command: string, callback: (...args: any[]) => any, thisArg?: any) {
+    const disposable = originalRegisterCommand(command, callback, thisArg);
+    commandTracker.registered.set(command, {
+      disposable,
+      registrationTime: new Date().toISOString(),
+    });
+    return disposable;
+  };
+
+  // Enhanced command execution tracking with timing and error handling
+  const originalExecuteCommand = vscode.commands.executeCommand;
+  vscode.commands.executeCommand = async function<T>(command: string, ...rest: any[]): Promise<T> {
+    const startTime = Date.now();
+    const executionRecord: CommandExecutionRecord = {
+      id: command,
+      timestamp: new Date().toISOString(),
+      parameters: rest,
+      durationMs: 0,
+      success: false,
+    };
+
+    try {
+      const result = await originalExecuteCommand<T>(command, ...rest);
+      executionRecord.durationMs = Date.now() - startTime;
+      executionRecord.success = true;
+      commandTracker.executed.push(executionRecord);
+      return result;
+    } catch (error) {
+      executionRecord.durationMs = Date.now() - startTime;
+      executionRecord.error = error;
+      commandTracker.executed.push(executionRecord);
+      throw error;
+    }
+  };
+
+  // Add tracking data to context
+  async function getAllContext(): Promise<Record<string, unknown>> {
+    const baseContext = await getBaseContext();
+    const trackingContext = {
+      commands: {
+        registered: Array.from(commandTracker.registered.entries()).map(([id, info]) => ({
+          id,
+          registrationTime: info.registrationTime,
+        })),
+        executed: commandTracker.executed,
+      },
+      terminals: {
+        active: Array.from(terminalTracker.active.entries()).map(([name, info]) => ({
+          name,
+          creationTime: info.creationTime,
+          lastActivity: info.lastActivity,
+          inputCount: info.inputCount,
+          outputCount: info.outputCount,
+        })),
+        history: terminalTracker.history,
+      },
+    };
+
+    return {
+      ...baseContext,
+      tracking: trackingContext,
+    };
+  }
+
+  async function getBaseContext(): Promise<Record<string, unknown>> {
+    return {
+      workspace: await getWorkspaceContext(),
+      window: getWindowContext(),
+      language: getLanguageContext(),
+      debug: getDebugContext(),
+      sourceControl: getSourceControlContext(),
+      tasks: await getTasksContext(),
+      extension: getExtensionContext(extensionContext),
+      extensionHost: getExtensionHostContext(),
+      settings: getSettingsContext(),
+      keybindings: getKeybindingsContext(),
+      theme: getThemeContext(),
+      views: getViewsContext(),
+      customEditors: getCustomEditorsContext(),
+    };
+  }
+
   context.subscriptions.push(
     extractContextCommand,
     executeSampleCommand,
     createTerminalCommand,
     onDidChangeActiveTextEditor,
     onDidChangeWindowState,
+    onDidStartDebugSession,
+    onDidTerminateDebugSession,
+    onDidChangeBreakpoints,
+    onDidChangeTextEditorSelection,
+    onDidChangeTextEditorVisibleRanges,
+    onDidChangeTextEditorViewColumn,
+    onDidChangeDiagnostics,
+    onDidChangeExtensions,
+    onDidCreateFiles,
+    onDidDeleteFiles,
+    onDidRenameFiles,
+    onDidChangeConfiguration,
+    onDidChangeTextDocument,
+    onDidChangeWorkspaceFolders,
+    onDidCreateTerminal,
+    onDidCloseTerminal
   );
 }
 
