@@ -57,11 +57,50 @@ The extension can be configured through VSCode settings:
 
 ## Development
 
+### Linting and Formatting Setup
+
+The project uses a comprehensive quality assurance setup:
+
+#### ESLint Configuration
+- Primary configuration file: `.eslintrc.cjs`
+- Linting scope limited to `src/` directory
+- Ignored patterns:
+  - `node_modules/`
+  - `dist/`
+  - `out/`
+  - `coverage/`
+  - `*.min.js`
+  - `*.d.ts`
+- Extends:
+  - eslint:recommended
+  - @typescript-eslint/recommended
+  - prettier/recommended
+
+#### Prettier Integration
+- Configuration file: `.prettierrc.json`
+- Integrated with ESLint through `eslint-config-prettier`
+- Automatic formatting on save
+
+#### MarkdownLint
+- Configuration file: `.markdownlint.json`
+- Lints all documentation files
+- Enforces consistent markdown formatting
+
+#### TypeDoc Documentation
+- Configuration file: `typedoc.json`
+- Generates API documentation
+- Enforces documentation standards
+
 ### Virtual Environment Setup
 
-The development environment requires a Python virtual environment (.venv) located in your workspace directory. The system will prompt you for the location of your .venv directory when needed.
+The development environment requires a Python virtual environment (`.venv`) located in your workspace directory. The system will prompt you for the location of your `.venv` directory when needed.
 
-To activate the virtual environment:
+To check if the virtual environment is already active:
+```bash
+python -c "import sys; print(sys.prefix != sys.base_prefix)"
+```
+
+If the command returns `False`, activate the virtual environment:
 ```bash
 source /path/to/workspace/.venv/bin/activate
 ```
@@ -74,7 +113,18 @@ The extension uses a modern development workflow with:
 - **Webpack** for optimized production builds
 - **ESLint** for code quality
 - **Prettier** for code formatting
+- **TypeDoc** for documentation generation
+- **MarkdownLint** for documentation quality
 - **Python Virtual Environment** for dependency isolation
+
+### Documentation Standards
+
+All code should be documented using TypeDoc comments following these guidelines:
+- Use `/** */` for documentation blocks
+- Include descriptions for all public APIs
+- Use `@param` for function parameters
+- Use `@returns` for return values
+- Use `@example` for code examples
 
 ### Building the Extension
 
@@ -89,9 +139,9 @@ cd vscode-context
 npm install
 ```
 
-3. Activate virtual environment:
+3. Check and activate virtual environment if needed:
 ```bash
-source /path/to/workspace/.venv/bin/activate
+python -c "import sys; print(sys.prefix != sys.base_prefix)" || source /path/to/workspace/.venv/bin/activate
 ```
 
 4. Run the development build:
@@ -110,11 +160,13 @@ All development commands should be run within the activated virtual environment:
 
 | Command | Description |
 |---------|-------------|
-| `npm run build` | Build production bundle using webpack |
+| `npm run build` | Run quality checks and build production bundle |
 | `npm run watch` | Watch and rebuild on changes |
+| `npm run quality` | Run all quality checks (linting, formatting, docs) |
 | `npm run lint` | Run ESLint checks |
 | `npm run format` | Format code with Prettier |
 | `npm run lint:markdown` | Lint markdown files |
+| `npm run docs` | Generate API documentation |
 
 ### Optimized Build Process
 
@@ -158,7 +210,7 @@ The extension provides these features through:
 - Event subscriptions for real-time updates
 
 ## Installation
-1. Download the latest .vsix file
+1. Download the latest `.vsix` file
 2. Run:
    ```bash
    code --install-extension vscode-context-{version}.vsix
@@ -182,7 +234,7 @@ After making changes and rebuilding the extension, follow these steps to update:
    code --install-extension vscode-context-{new-version}.vsix
    ```
 
-Replace {old-version} and {new-version} with the appropriate version numbers.
+Replace `{old-version}` and `{new-version}` with the appropriate version numbers.
 
 ## Usage
 Open the Command Palette (Ctrl+Shift+P) and search for "Extract VSCode Context" to run the extension.
