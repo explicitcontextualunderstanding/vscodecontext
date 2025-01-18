@@ -28,14 +28,14 @@ export function activate(context: vscode.ExtensionContext): void {
       outputChannel.appendLine('VSCode Context Data:');
       outputChannel.appendLine(JSON.stringify(contextData, null, 2));
       outputChannel.show(true);
-    }
+    },
   );
 
   const executeSampleCommand = vscode.commands.registerCommand(
     'vscode-context.executeSample',
     async () => {
       await vscode.commands.executeCommand('workbench.action.quickOpen');
-    }
+    },
   );
 
   const createTerminalCommand = vscode.commands.registerCommand(
@@ -44,7 +44,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const terminal = vscode.window.createTerminal('Cline Terminal');
       terminal.show();
       terminal.sendText('echo "Hello from Cline Terminal"');
-    }
+    },
   );
 
   context.subscriptions.push(
@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext): void {
     executeSampleCommand,
     createTerminalCommand,
     onDidChangeActiveTextEditor,
-    onDidChangeWindowState
+    onDidChangeWindowState,
   );
 }
 
@@ -114,11 +114,9 @@ function getThemeContext(): Record<string, unknown> {
       theme.kind === vscode.ColorThemeKind.Light
         ? 'Light'
         : theme.kind === vscode.ColorThemeKind.Dark
-        ? 'Dark'
-        : 'HighContrast',
-    customizations: vscode.workspace
-      .getConfiguration('workbench')
-      .get('colorCustomizations'),
+          ? 'Dark'
+          : 'HighContrast',
+    customizations: vscode.workspace.getConfiguration('workbench').get('colorCustomizations'),
   };
 }
 
@@ -139,9 +137,7 @@ function getViewsContext(): Record<string, unknown> {
 
 function getCustomEditorsContext(): Record<string, unknown>[] {
   const customEditors = vscode.window.visibleTextEditors.filter(
-    (editor) =>
-      editor.document.uri.scheme !== 'file' &&
-      editor.document.uri.scheme !== 'untitled'
+    (editor) => editor.document.uri.scheme !== 'file' && editor.document.uri.scheme !== 'untitled',
   );
   return customEditors.map((editor) => ({
     uri: editor.document.uri.toString(),
@@ -153,13 +149,27 @@ function getCustomEditorsContext(): Record<string, unknown>[] {
 
 async function getWorkspaceContext(): Promise<Record<string, unknown>> {
   const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-  const fsContent = rootUri
-    ? await vscode.workspace.fs.readDirectory(rootUri)
-    : [];
+  const fsContent = rootUri ? await vscode.workspace.fs.readDirectory(rootUri) : [];
+
+  // Get recent files
+  interface RecentFile {
+    uri: string;
+    languageId: string;
+    isDirty: boolean;
+  }
+
+  const recentFiles = vscode.workspace.textDocuments.map(
+    (doc): RecentFile => ({
+      uri: doc.uri.toString(),
+      languageId: doc.languageId,
+      isDirty: doc.isDirty,
+    }),
+  );
 
   return {
     workspaceFolders: vscode.workspace.workspaceFolders?.map((folder) => ({
       uri: folder.uri.toString(),
+      name: folder.name,
     })),
     workspaceFs: {
       rootContent: fsContent.map(([name, type]) => ({
@@ -168,12 +178,13 @@ async function getWorkspaceContext(): Promise<Record<string, unknown>> {
           type === vscode.FileType.File
             ? 'file'
             : type === vscode.FileType.Directory
-            ? 'directory'
-            : type === vscode.FileType.SymbolicLink
-            ? 'symlink'
-            : 'unknown',
+              ? 'directory'
+              : type === vscode.FileType.SymbolicLink
+                ? 'symlink'
+                : 'unknown',
       })),
     },
+    recentFiles,
     configuration: getConfig(),
   };
 }
@@ -244,11 +255,8 @@ function getWindowContext(): Record<string, unknown> {
           lineCount: activeEditor.document.lineCount,
           version: activeEditor.document.version,
           isClosed: activeEditor.document.isClosed,
-          eol:
-            activeEditor.document.eol === vscode.EndOfLine.LF ? 'LF' : 'CRLF',
-          lineAt: activeEditor.document.lineAt(
-            activeEditor.selection.start.line
-          ).text,
+          eol: activeEditor.document.eol === vscode.EndOfLine.LF ? 'LF' : 'CRLF',
+          lineAt: activeEditor.document.lineAt(activeEditor.selection.start.line).text,
         }
       : undefined,
     textEditorSelection: vscode.window.activeTextEditor
@@ -275,22 +283,18 @@ function getWindowContext(): Record<string, unknown> {
     terminals: vscode.window.terminals.map((terminal) => ({
       name: terminal.name,
     })),
-    activeEditorSelections: vscode.window.activeTextEditor?.selections.map(
-      (selection) => ({
-        start: {
-          line: selection.start.line,
-          character: selection.start.character,
-        },
-        end: {
-          line: selection.end.line,
-          character: selection.end.character,
-        },
-      })
-    ),
-    onDidChangeActiveTextEditor:
-      'vscode.window.onDidChangeActiveTextEditor (Subscription)',
-    onDidChangeWindowState:
-      'vscode.window.onDidChangeWindowState (Subscription)',
+    activeEditorSelections: vscode.window.activeTextEditor?.selections.map((selection) => ({
+      start: {
+        line: selection.start.line,
+        character: selection.start.character,
+      },
+      end: {
+        line: selection.end.line,
+        character: selection.end.character,
+      },
+    })),
+    onDidChangeActiveTextEditor: 'vscode.window.onDidChangeActiveTextEditor (Subscription)',
+    onDidChangeWindowState: 'vscode.window.onDidChangeWindowState (Subscription)',
     activeEditorLanguageId: vscode.window.activeTextEditor?.document.languageId,
   };
 }
@@ -327,12 +331,12 @@ function getLanguageContext(): Record<string, unknown> {
             d.severity === vscode.DiagnosticSeverity.Error
               ? 'Error'
               : d.severity === vscode.DiagnosticSeverity.Warning
-              ? 'Warning'
-              : d.severity === vscode.DiagnosticSeverity.Information
-              ? 'Information'
-              : d.severity === vscode.DiagnosticSeverity.Hint
-              ? 'Hint'
-              : 'Unknown',
+                ? 'Warning'
+                : d.severity === vscode.DiagnosticSeverity.Information
+                  ? 'Information'
+                  : d.severity === vscode.DiagnosticSeverity.Hint
+                    ? 'Hint'
+                    : 'Unknown',
           range: {
             start: {
               line: d.range.start.line,
@@ -350,21 +354,15 @@ function getLanguageContext(): Record<string, unknown> {
         hover: vscode.languages.match(languageSelector, activeDocument) > 0,
         definition: vscode.languages.match(languageSelector, activeDocument) > 0,
         references: vscode.languages.match(languageSelector, activeDocument) > 0,
-        documentSymbols:
-          vscode.languages.match(languageSelector, activeDocument) > 0,
-        codeActions:
-          vscode.languages.match(languageSelector, activeDocument) > 0,
-        formatting:
-          vscode.languages.match(languageSelector, activeDocument) > 0,
+        documentSymbols: vscode.languages.match(languageSelector, activeDocument) > 0,
+        codeActions: vscode.languages.match(languageSelector, activeDocument) > 0,
+        formatting: vscode.languages.match(languageSelector, activeDocument) > 0,
         rename: vscode.languages.match(languageSelector, activeDocument) > 0,
         folding: vscode.languages.match(languageSelector, activeDocument) > 0,
-        documentHighlight:
-          vscode.languages.match(languageSelector, activeDocument) > 0,
-        documentLinks:
-          vscode.languages.match(languageSelector, activeDocument) > 0,
+        documentHighlight: vscode.languages.match(languageSelector, activeDocument) > 0,
+        documentLinks: vscode.languages.match(languageSelector, activeDocument) > 0,
         color: vscode.languages.match(languageSelector, activeDocument) > 0,
-        linkedEditing:
-          vscode.languages.match(languageSelector, activeDocument) > 0,
+        linkedEditing: vscode.languages.match(languageSelector, activeDocument) > 0,
       },
     },
   };
@@ -398,9 +396,7 @@ function getDebugContext(): Record<string, unknown> {
       isAttach: activeSession.configuration?.request === 'attach',
       isLaunch: activeSession.configuration?.request === 'launch',
       customRequest:
-        typeof activeSession.customRequest === 'function'
-          ? 'Available'
-          : 'Unavailable',
+        typeof activeSession.customRequest === 'function' ? 'Available' : 'Unavailable',
     },
     sessions: [
       {
@@ -468,14 +464,14 @@ async function getTasksContext(): Promise<Record<string, unknown>> {
                 args: task.execution.args,
               }
             : task.execution instanceof vscode.ProcessExecution
-            ? {
-                type: 'ProcessExecution',
-                process: task.execution.process,
-                args: task.execution.args,
-              }
-            : {
-                type: 'Other',
-              },
+              ? {
+                  type: 'ProcessExecution',
+                  process: task.execution.process,
+                  args: task.execution.args,
+                }
+              : {
+                  type: 'Other',
+                },
         problemMatchers: task.problemMatchers,
         group: task.group ? task.group.id : undefined,
         presentationOptions: {
@@ -504,9 +500,7 @@ interface PackageJson {
   engines: Record<string, string>;
 }
 
-function getExtensionContext(
-  context: vscode.ExtensionContext
-): Record<string, unknown> {
+function getExtensionContext(context: vscode.ExtensionContext): Record<string, unknown> {
   const packageJson: PackageJson = {
     name: 'vscode-context',
     version: '0.0.6',
@@ -535,7 +529,7 @@ function getExtensionContext(
       main: packageJson.main,
       engines: packageJson.engines,
       isActive: extension?.isActive ?? false,
-      packageJSON: extension?.packageJSON,
+      packageJSON: extension?.packageJSON as Record<string, unknown>,
     },
   };
 }

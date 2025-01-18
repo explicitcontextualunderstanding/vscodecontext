@@ -1,26 +1,100 @@
 # VSCode Context Extension
 
-This extension provides context information about your VSCode environment.
+[![Version](https://img.shields.io/badge/version-0.0.6-blue.svg)](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/your-name.vscode-context)](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
+
+> Gain deep insights into your VSCode environment with comprehensive context information
+
+## Table of Contents
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Contributing](#contributing)
 
 ## Features
 
-The extension provides detailed context information about your VSCode environment including:
+The VSCode Context extension provides detailed insights into your development environment:
 
 ### Workspace Context
-- Workspace folders and file structure
-- Editor configuration (font size, tab size, etc.)
-- File and search settings
+- [x] Workspace folders and file structure
+- [x] Editor configuration (font size, tab size, etc.)
+- [x] File and search settings
 
 ### Window Context
-- Active text editor information
-- Visible text editors and their documents
-- Terminal information and state
-- Window focus and state changes
+- [x] Active text editor information
+- [x] Visible text editors and their documents
+- [x] Terminal information and state
+- [x] Window focus and state changes
 
 ### Language Context
-- Active editor language ID
-- Available languages
-- Language diagnostics and capabilities
+- [x] Active editor language ID
+- [x] Available languages
+- [x] Language diagnostics and capabilities
+
+## Quick Start
+
+1. Install from Marketplace:
+```bash
+code --install-extension your-name.vscode-context
+```
+
+2. Open Command Palette (Ctrl+Shift+P) and run:
+```bash
+VSCode Context: Extract Context
+```
+
+3. View the output in the "VSCode Context" channel
+
+## Configuration
+
+The extension can be configured through VSCode settings:
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `vscodeContext.showOnStartup` | Show context on VSCode startup | `false` |
+| `vscodeContext.refreshInterval` | Context refresh interval in seconds | `60` |
+
+## Development
+
+### Building the Extension
+
+1. Clone the repository:
+```bash
+git clone https://github.com/your-name/vscode-context.git
+cd vscode-context
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Compile TypeScript:
+```bash
+npm run compile
+```
+
+4. Package extension:
+```bash
+npx vsce package
+```
+
+### Development Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run watch` | Auto-compile on changes |
+| `npm run lint` | Run ESLint checks |
+| `npm run format` | Format code with Prettier |
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+---
+
+> **Note:** For detailed documentation and troubleshooting, visit our [documentation site](https://your-name.github.io/vscode-context)
 - Syntax highlighting and language features
 
 ### Debug Context

@@ -1,0 +1,11 @@
+# Ignore all files except those needed for the extension
+*
+!src/
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!vsc-extension-quickstart.md
+!tsconfig.json
+!node_modules/
+!out/
