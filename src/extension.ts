@@ -370,6 +370,16 @@ function getWindowContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers language-specific information and diagnostics
+ * @returns Object containing language context data
+ * @remarks
+ * Includes:
+ * - Active editor language ID
+ * - Available languages in VSCode
+ * - Language features and capabilities
+ * - Diagnostics information (errors, warnings, etc.)
+ */
 function getLanguageContext(): Record<string, unknown> {
   const activeEditor = vscode.window.activeTextEditor;
   const activeDocument = activeEditor?.document;
