@@ -276,6 +276,16 @@ function getConfig(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers information about the current window and editor state
+ * @returns Object containing detailed window and editor context
+ * @remarks
+ * Includes:
+ * - Active text editor information
+ * - Document state and selection details
+ * - Visible editors and terminals
+ * - Editor selections and language information
+ */
 function getWindowContext(): Record<string, unknown> {
   const activeEditor = vscode.window.activeTextEditor;
 
