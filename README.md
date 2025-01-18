@@ -103,6 +103,20 @@ The project uses a comprehensive quality assurance setup:
   - `coverage/`
 - Enforces consistent markdown formatting
 
+#### Pre-commit Hooks
+
+The project uses [husky](https://typicode.github.io/husky/) to run quality checks before each commit:
+
+- **Prettier**: Code formatting
+- **ESLint**: JavaScript/TypeScript linting
+- **MarkdownLint**: Documentation linting
+
+These checks are automatically run when you commit changes using the following command:
+
+```bash
+npm run format && npm run lint && npm run lint:markdown
+```
+
 #### TypeDoc Documentation
 
 - Configuration file: `typedoc.json`
