@@ -5,7 +5,7 @@
 !package.json
 !README.md
 !LICENSE
-!out/extension.js
+!out/extension.cjs
 
 # Exclude development files
 .vscode/
