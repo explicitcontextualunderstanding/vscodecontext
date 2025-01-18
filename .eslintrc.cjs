@@ -19,13 +19,11 @@ module.exports = {
   rules: {
     // Your custom rules
   },
-  ignorePatterns: [
-    'node_modules/',
-    'dist/',
-    'out/',
-    'coverage/',
-    '*.min.js',
-    '*.d.ts',
-    '!src/**/*',
+  ignorePatterns: ['node_modules/', 'dist/', 'out/', 'coverage/', '*.min.js', '*.d.ts'],
+  overrides: [
+    {
+      files: ['src/**/*'],
+      excludedFiles: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**'],
+    },
   ],
 };

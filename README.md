@@ -44,13 +44,13 @@ The VSCode Context extension provides detailed insights into your development en
 code --install-extension your-name.vscode-context
 ```
 
-2. Open Command Palette (Ctrl+Shift+P) and run:
+1. Open Command Palette (Ctrl+Shift+P) and run:
 
 ```bash
 VSCode Context: Extract Context
 ```
 
-3. View the output in the "VSCode Context" channel
+1. View the output in the "VSCode Context" channel
 
 ## Configuration
 
@@ -86,11 +86,13 @@ The project uses a comprehensive quality assurance setup:
   - prettier/recommended
 - Overrides:
   - Specific rules for source files in `src/` directory
+
 #### Prettier Integration
 
 - Configuration file: `.prettierrc.json`
 - Integrated with ESLint through `eslint-config-prettier`
 - Automatic formatting on save
+
 #### MarkdownLint
 
 - Configuration file: `.markdownlint.json`
@@ -107,11 +109,11 @@ The project uses a comprehensive quality assurance setup:
 - Generates API documentation
 - Enforces documentation standards
 
-
-
 ### Virtual Environment Setup
 
-The development environment requires a Python virtual environment (`.venv`) located in your workspace directory. The system will prompt you for the location of your `.venv` directory when needed.
+The development environment requires a Python virtual environment (`.venv`)
+located in your workspace directory. The system will prompt you for the
+location of your `.venv` directory when needed.
 
 To check if the virtual environment is already active:
 
@@ -124,7 +126,6 @@ If the command returns `False`, activate the virtual environment:
 ```bash
 source /path/to/workspace/.venv/bin/activate
 ```
-
 
 ### Development Workflow
 
@@ -157,25 +158,25 @@ git clone https://github.com/your-name/vscode-context.git
 cd vscode-context
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Check and activate virtual environment if needed:
+1. Check and activate virtual environment if needed:
 
 ```bash
 python -c "import sys; print(sys.prefix != sys.base_prefix)" || source /path/to/workspace/.venv/bin/activate
 ```
 
-4. Run the development build:
+1. Run the development build:
 
 ```bash
 npm run build
 ```
 
-5. Package extension:
+1. Package extension:
 
 ```bash
 npx vsce package
@@ -194,6 +195,7 @@ All development commands should be run within the activated virtual environment:
 | `npm run format` | Format code with Prettier |
 | `npm run lint:markdown` | Lint markdown files |
 | `npm run docs` | Generate API documentation |
+
 ### Optimized Build Process
 
 The extension uses webpack to:
@@ -202,7 +204,6 @@ The extension uses webpack to:
 - Tree-shake unused code
 - Minify production builds
 - Generate source maps for debugging
-
 
 ## Contributing
 
@@ -260,13 +261,13 @@ After making changes and rebuilding the extension, follow these steps to update:
 vsce package
 ```
 
-2. Uninstall the old version:
+1. Uninstall the old version:
 
 ```bash
 code --uninstall-extension vscode-context-{old-version}.vsix
 ```
 
-3. Install the new version:
+1. Install the new version:
 
 ```bash
 code --install-extension vscode-context-{new-version}.vsix
