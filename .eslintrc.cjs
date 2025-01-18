@@ -25,5 +25,14 @@ module.exports = {
       files: ['src/**/*'],
       excludedFiles: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**'],
     },
+    {
+      files: ['webpack.config.js'],
+      parserOptions: {
+        sourceType: 'script',
+      },
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
   ],
 };

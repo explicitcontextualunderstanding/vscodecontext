@@ -147,6 +147,28 @@ All code should be documented using TypeDoc comments following these guidelines:
 
 ### Building the Extension
 
+#### Requirements
+
+- package.json must include:
+  - `main` pointing to the entry file
+  - `activationEvents` defining when the extension activates
+  - `contributes` defining commands, menus, etc.
+  - `engines.vscode` specifying compatible VSCode version
+- Entry file must:
+  - Be a CommonJS module (extension.cjs.js)
+  - Export an `activate` function
+  - Export a `deactivate` function (optional)
+- Must be packaged using vsce (Visual Studio Code Extensions)
+- Output files must be included in .vscodeignore
+
+#### Build Configuration
+
+The extension uses CommonJS modules for VSCode compatibility. When making changes to the build configuration:
+
+- Use CommonJS require() syntax in webpack.config.js
+- Ensure output file is extension.cjs
+- Maintain ESLint configuration for CommonJS compatibility
+
 1. Clone the repository:
 
 ```bash
@@ -187,6 +209,15 @@ Development commands:
 | `npm run format` | Format code with Prettier |
 | `npm run lint:markdown` | Lint markdown files |
 | `npm run docs` | Generate API documentation |
+
+### Module System Configuration
+
+The extension uses CommonJS modules for VSCode compatibility. Key configuration details:
+
+- Webpack configuration uses CommonJS require() syntax
+- Output file is extension.cjs
+- ESLint configured to allow CommonJS syntax in webpack.config.js
+- Package.json main field points to extension.cjs
 
 ### Optimized Build Process
 
