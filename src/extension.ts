@@ -542,6 +542,15 @@ function getSourceControlContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers information about configured tasks in the workspace
+ * @returns Promise resolving to an object containing task context data
+ * @remarks
+ * Includes:
+ * - Task names and types
+ * - Execution details (shell or process)
+ * - Problem matchers and presentation options
+ */
 async function getTasksContext(): Promise<Record<string, unknown>> {
   try {
     const tasks = await vscode.tasks.fetchTasks();
