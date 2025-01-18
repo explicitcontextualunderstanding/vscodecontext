@@ -46,6 +46,11 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   );
 
+  /**
+   * Sample command demonstrating command execution
+   * @remarks
+   * - Executes the quick open command as an example
+   */
   const executeSampleCommand = vscode.commands.registerCommand(
     'vscode-context.executeSample',
     async () => {
@@ -78,6 +83,11 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 }
 
+/**
+ * Extension deactivation function
+ * @remarks
+ * Currently empty as no cleanup is needed
+ */
 export function deactivate(): void {}
 
 /**
@@ -164,10 +174,24 @@ function getSettingsContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers information about configured keybindings
+ * @returns Array of keybinding configurations
+ * @remarks
+ * Currently returns empty array as implementation is pending
+ */
 function getKeybindingsContext(): unknown[] {
   return [];
 }
 
+/**
+ * Gathers information about the current theme and color customizations
+ * @returns Object containing theme context data
+ * @remarks
+ * Includes:
+ * - Current theme kind (Light/Dark/High Contrast)
+ * - Color customizations from workbench settings
+ */
 function getThemeContext(): Record<string, unknown> {
   const theme = vscode.window.activeColorTheme;
   return {
@@ -181,6 +205,15 @@ function getThemeContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers information about visible text editors and their view columns
+ * @returns Object containing views context data
+ * @remarks
+ * Includes:
+ * - Visible text editors and their view columns
+ * - Active view column information
+ * - Document URIs and language IDs
+ */
 function getViewsContext(): Record<string, unknown> {
   const editors = vscode.window.visibleTextEditors;
   return {
@@ -196,6 +229,15 @@ function getViewsContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers information about custom editors in the workspace
+ * @returns Array of objects containing custom editor context data
+ * @remarks
+ * Includes:
+ * - Custom editor URIs and schemes
+ * - Language IDs and view columns
+ * - Filters out standard file and untitled scheme editors
+ */
 function getCustomEditorsContext(): Record<string, unknown>[] {
   const customEditors = vscode.window.visibleTextEditors.filter(
     (editor) => editor.document.uri.scheme !== 'file' && editor.document.uri.scheme !== 'untitled',
@@ -208,6 +250,16 @@ function getCustomEditorsContext(): Record<string, unknown>[] {
   }));
 }
 
+/**
+ * Gathers workspace-related context information
+ * @returns Promise resolving to an object containing workspace context data
+ * @remarks
+ * Includes:
+ * - Workspace folders and their URIs
+ * - File system content of the root directory
+ * - Recent files and their states
+ * - Workspace configuration settings
+ */
 async function getWorkspaceContext(): Promise<Record<string, unknown>> {
   const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
   const fsContent = rootUri ? await vscode.workspace.fs.readDirectory(rootUri) : [];
@@ -250,6 +302,15 @@ async function getWorkspaceContext(): Promise<Record<string, unknown>> {
   };
 }
 
+/**
+ * Retrieves workspace configuration settings
+ * @returns Object containing categorized configuration settings
+ * @remarks
+ * Includes settings from:
+ * - Editor (font size, tab size, etc.)
+ * - Files (auto-save, excludes, etc.)
+ * - Search (excludes, symlinks, etc.)
+ */
 function getConfig(): Record<string, unknown> {
   const editorConfig = vscode.workspace.getConfiguration('editor');
   const filesConfig = vscode.workspace.getConfiguration('files');
