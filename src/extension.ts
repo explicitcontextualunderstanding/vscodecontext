@@ -590,6 +590,16 @@ interface PackageJson {
   engines: Record<string, string>;
 }
 
+/**
+ * Gathers extension-specific context information
+ * @param context - The extension context provided by VSCode
+ * @returns Object containing extension context data
+ * @remarks
+ * Includes:
+ * - Extension version and state
+ * - Global and workspace state keys
+ * - Extension path and package information
+ */
 function getExtensionContext(context: vscode.ExtensionContext): Record<string, unknown> {
   const packageJson: PackageJson = {
     name: 'vscode-context',
