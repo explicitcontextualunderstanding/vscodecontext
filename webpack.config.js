@@ -1,18 +1,13 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import nodeExternals from 'webpack-node-externals';
+const path = require('path');
+const nodeExternals = require('webpack-node-externals');
 
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export default {
+module.exports = {
   target: 'node',
   mode: 'production',
   entry: './src/extension.ts',
   output: {
     path: path.resolve(__dirname, 'out'),
-    filename: 'extension.js',
+    filename: 'extension.cjs.js',
     libraryTarget: 'commonjs2',
     devtoolModuleFilenameTemplate: '../[resource-path]',
   },
