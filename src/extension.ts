@@ -506,6 +506,15 @@ function getDebugContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers source control information for the workspace
+ * @returns Object containing source control context data
+ * @remarks
+ * Includes:
+ * - Repository information
+ * - Source control root URI
+ * - Current branch and state information
+ */
 function getSourceControlContext(): Record<string, unknown> {
   const repo = vscode.workspace.workspaceFolders?.[0]?.uri;
 
