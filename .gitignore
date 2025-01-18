@@ -1,2 +1,6 @@
 node_modules
 out/
+docs/*
+docs/modules
+docs/functions
+*.vsix
