@@ -1,0 +1,12 @@
+{
+  "entryPoints": ["./src"],
+  "out": "docs",
+  "exclude": ["**/node_modules/**", "**/test/**"],
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "hideGenerator": true,
+  "includeVersion": true,
+  "theme": "default",
+  "tsconfig": "tsconfig.json"
+}
