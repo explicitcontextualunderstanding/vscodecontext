@@ -449,6 +449,15 @@ function getLanguageContext(): Record<string, unknown> {
   };
 }
 
+/**
+ * Gathers information about active debug sessions
+ * @returns Object containing debug context data
+ * @remarks
+ * Includes:
+ * - Active debug session details
+ * - Breakpoint information and types
+ * - Session configuration and state
+ */
 function getDebugContext(): Record<string, unknown> {
   const activeSession = vscode.debug.activeDebugSession;
   const breakpoints = vscode.debug.breakpoints;
