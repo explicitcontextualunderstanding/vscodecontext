@@ -123,24 +123,6 @@ npm run format && npm run lint && npm run lint:markdown
 - Generates API documentation
 - Enforces documentation standards
 
-### Virtual Environment Setup
-
-The development environment requires a Python virtual environment (`.venv`)
-located in your workspace directory. The system will prompt you for the
-location of your `.venv` directory when needed.
-
-To check if the virtual environment is already active:
-
-```bash
-python -c "import sys; print(sys.prefix != sys.base_prefix)"
-```
-
-If the command returns `False`, activate the virtual environment:
-
-```bash
-source /path/to/workspace/.venv/bin/activate
-```
-
 ### Development Workflow
 
 The extension uses a modern development workflow with:
@@ -151,7 +133,7 @@ The extension uses a modern development workflow with:
 - **Prettier** for code formatting
 - **TypeDoc** for documentation generation
 - **MarkdownLint** for documentation quality
-- **Python Virtual Environment** for dependency isolation
+=======
 
 ### Documentation Standards
 
@@ -178,12 +160,7 @@ cd vscode-context
 npm install
 ```
 
-1. Check and activate virtual environment if needed:
-
-```bash
-python -c "import sys; print(sys.prefix != sys.base_prefix)" || source /path/to/workspace/.venv/bin/activate
-```
-
+=======
 1. Run the development build:
 
 ```bash
@@ -198,7 +175,7 @@ npx vsce package
 
 ### Development Commands
 
-All development commands should be run within the activated virtual environment:
+Development commands:
 
 | Command | Description |
 |---------|-------------|
