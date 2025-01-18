@@ -1,0 +1,28 @@
+{
+  "name": "vscode-context",
+  "version": "0.0.1",
+  "publisher": "your-name",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "dependencies": {
+    "generator-code": "^1.11.5"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-context.extractContext",
+        "title": "Extract VSCode Context"
+      }
+    ]
+  },
+  "scripts": {
+    "watch": "tsc -w",
+    "compile": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "@types/vscode": "^1.96.0",
+    "typescript": "^5.7.3"
+  }
+}
