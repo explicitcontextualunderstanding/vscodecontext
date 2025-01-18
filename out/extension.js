@@ -36,7 +36,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
+let extensionContext;
 function activate(context) {
+    extensionContext = context;
     console.log('Congratulations, your extension "vscode-context" is now active!');
     let disposable = vscode.commands.registerCommand('vscode-context.extractContext', async () => {
         const contextData = await getAllContext();
@@ -57,7 +59,7 @@ async function getAllContext() {
         debug: getDebugContext(),
         sourceControl: getSourceControlContext(),
         tasks: getTasksContext(),
-        extension: getExtensionContext()
+        extension: getExtensionContext(extensionContext)
     };
 }
 function getWorkspaceContext() {
@@ -127,19 +129,19 @@ function getDebugContext() {
             type: vscode.debug.activeDebugSession.type,
             name: vscode.debug.activeDebugSession.name
         } : undefined,
-        sessions: vscode.debug.sessions.map(session => ({
-            type: session.type,
-            name: session.name
-        }))
+        sessions: vscode.debug.activeDebugSession ? [{
+                type: vscode.debug.activeDebugSession.type,
+                name: vscode.debug.activeDebugSession.name
+            }] : []
     };
 }
 function getSourceControlContext() {
+    const repo = vscode.workspace.workspaceFolders?.[0]?.uri;
     return {
-        repositories: vscode.scm.repositories.map(repo => ({
-            rootUri: repo.rootUri.toString()
-        })),
-        // Note: Accessing rootUri directly on SourceControl object in the array
-        sourceControlRootUri: vscode.scm.repositories.length > 0 ? vscode.scm.repositories[0].rootUri.toString() : undefined
+        repositories: repo ? [{
+                rootUri: repo.toString()
+            }] : [],
+        sourceControlRootUri: repo?.toString()
     };
 }
 async function getTasksContext() {
@@ -160,7 +162,7 @@ async function getTasksContext() {
         };
     }
 }
-function getExtensionContext() {
+function getExtensionContext(context) {
     return {
         globalStateKeys: context.globalState.keys(),
         workspaceStateKeys: context.workspaceState.keys(),

@@ -1,13 +1,21 @@
 {
   "name": "vscode-context",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "your-name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-name/vscode-context.git"
+  },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.96.0"
   },
   "dependencies": {
     "generator-code": "^1.11.5"
   },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:vscode-context.extractContext"
+  ],
   "contributes": {
     "commands": [
       {
