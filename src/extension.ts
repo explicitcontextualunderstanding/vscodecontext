@@ -659,7 +659,7 @@ async function getTasksContext(): Promise<Record<string, unknown>> {
         },
       })),
     };
-  } catch (error) {
+  } catch {
     return {
       tasks: 'Error fetching tasks',
     };
