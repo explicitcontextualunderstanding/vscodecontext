@@ -164,20 +164,6 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   );
 
-  interface CommandRegistration {
-    disposable: vscode.Disposable;
-    registrationTime: string;
-  }
-
-  interface CommandExecutionRecord {
-    id: string;
-    timestamp: string;
-    parameters: unknown[];
-    durationMs?: number;
-    success?: boolean;
-    error?: unknown;
-  }
-
   interface TerminalInfo {
     terminal: vscode.Terminal;
     creationTime: string;
@@ -195,18 +181,13 @@ export function activate(context: vscode.ExtensionContext): void {
     lifetimeMs: number;
   }
 
-  const commandTracker = {
-    registered: new Map<string, CommandRegistration>(),
-    executed: [] as CommandExecutionRecord[],
-  };
-
   const terminalTracker = {
     active: new Map<string, TerminalInfo>(),
     history: [] as TerminalHistoryRecord[],
   };
 
   // Track terminal creation and activity
-  const onDidCreateTerminal = vscode.window.onDidOpenTerminal((terminal) => {
+  vscode.window.onDidOpenTerminal((terminal) => {
     const terminalInfo: TerminalInfo = {
       terminal,
       creationTime: new Date().toISOString(),
@@ -224,7 +205,7 @@ export function activate(context: vscode.ExtensionContext): void {
           const creationTime = new Date(info.creationTime);
           const closeTime = new Date();
           const lifetimeMs = closeTime.getTime() - creationTime.getTime();
-          
+
           terminalTracker.history.push({
             name: terminal.name,
             creationTime: info.creationTime,
@@ -233,7 +214,7 @@ export function activate(context: vscode.ExtensionContext): void {
             outputCount: info.outputCount,
             lifetimeMs,
           });
-          
+
           terminalTracker.active.delete(terminal.name);
         }
       }
@@ -241,7 +222,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(closeDisposable);
   });
-
   // Track terminal destruction with lifetime calculation
   const onDidCloseTerminal = vscode.window.onDidCloseTerminal((terminal) => {
     const terminalInfo = terminalTracker.active.get(terminal.name);
@@ -249,7 +229,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const creationTime = new Date(terminalInfo.creationTime);
       const closeTime = new Date();
       const lifetimeMs = closeTime.getTime() - creationTime.getTime();
-      
+
       terminalTracker.history.push({
         name: terminal.name,
         creationTime: terminalInfo.creationTime,
@@ -258,84 +238,18 @@ export function activate(context: vscode.ExtensionContext): void {
         outputCount: terminalInfo.outputCount,
         lifetimeMs,
       });
-      
+
       terminalTracker.active.delete(terminal.name);
     }
   });
 
-  // Enhanced command registration tracking
-  const originalRegisterCommand = vscode.commands.registerCommand;
-  vscode.commands.registerCommand = function(command: string, callback: (...args: any[]) => any, thisArg?: any) {
-    const disposable = originalRegisterCommand(command, callback, thisArg);
-    commandTracker.registered.set(command, {
-      disposable,
-      registrationTime: new Date().toISOString(),
-    });
-    return disposable;
-  };
-
-  // Enhanced command execution tracking with timing and error handling
-  const originalExecuteCommand = vscode.commands.executeCommand;
-  vscode.commands.executeCommand = async function<T>(command: string, ...rest: any[]): Promise<T> {
-    const startTime = Date.now();
-    const executionRecord: CommandExecutionRecord = {
-      id: command,
-      timestamp: new Date().toISOString(),
-      parameters: rest,
-      durationMs: 0,
-      success: false,
-    };
-
-    try {
-      const result = await originalExecuteCommand<T>(command, ...rest);
-      executionRecord.durationMs = Date.now() - startTime;
-      executionRecord.success = true;
-      commandTracker.executed.push(executionRecord);
-      return result;
-    } catch (error) {
-      executionRecord.durationMs = Date.now() - startTime;
-      executionRecord.error = error;
-      commandTracker.executed.push(executionRecord);
-      throw error;
-    }
-  };
-
-  // Add tracking data to context
   async function getAllContext(): Promise<Record<string, unknown>> {
-    const baseContext = await getBaseContext();
-    const trackingContext = {
-      commands: {
-        registered: Array.from(commandTracker.registered.entries()).map(([id, info]) => ({
-          id,
-          registrationTime: info.registrationTime,
-        })),
-        executed: commandTracker.executed,
-      },
-      terminals: {
-        active: Array.from(terminalTracker.active.entries()).map(([name, info]) => ({
-          name,
-          creationTime: info.creationTime,
-          lastActivity: info.lastActivity,
-          inputCount: info.inputCount,
-          outputCount: info.outputCount,
-        })),
-        history: terminalTracker.history,
-      },
-    };
-
-    return {
-      ...baseContext,
-      tracking: trackingContext,
-    };
-  }
-
-  async function getBaseContext(): Promise<Record<string, unknown>> {
     return {
       workspace: await getWorkspaceContext(),
       window: getWindowContext(),
       language: getLanguageContext(),
       debug: getDebugContext(),
-      sourceControl: getSourceControlContext(),
+      sourceControl: await getSourceControlContext(),
       tasks: await getTasksContext(),
       extension: getExtensionContext(extensionContext),
       extensionHost: getExtensionHostContext(),
@@ -367,8 +281,7 @@ export function activate(context: vscode.ExtensionContext): void {
     onDidChangeConfiguration,
     onDidChangeTextDocument,
     onDidChangeWorkspaceFolders,
-    onDidCreateTerminal,
-    onDidCloseTerminal
+    onDidCloseTerminal,
   );
 }
 
@@ -393,23 +306,6 @@ export function deactivate(): void {}
  * - Extension configuration
  * - Extension host environment
  */
-async function getAllContext(): Promise<Record<string, unknown>> {
-  return {
-    workspace: await getWorkspaceContext(),
-    window: getWindowContext(),
-    language: getLanguageContext(),
-    debug: getDebugContext(),
-    sourceControl: getSourceControlContext(),
-    tasks: await getTasksContext(),
-    extension: getExtensionContext(extensionContext),
-    extensionHost: getExtensionHostContext(),
-    settings: getSettingsContext(),
-    keybindings: getKeybindingsContext(),
-    theme: getThemeContext(),
-    views: getViewsContext(),
-    customEditors: getCustomEditorsContext(),
-  };
-}
 
 /**
  * Gathers information about the extension host environment
@@ -550,7 +446,8 @@ function getCustomEditorsContext(): Record<string, unknown>[] {
  * - Workspace configuration settings
  */
 async function getWorkspaceContext(): Promise<Record<string, unknown>> {
-  const rootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  const rootUri = workspaceFolders?.[0]?.uri;
   const fsContent = rootUri ? await vscode.workspace.fs.readDirectory(rootUri) : [];
 
   // Get recent files
@@ -577,10 +474,11 @@ async function getWorkspaceContext(): Promise<Record<string, unknown>> {
   );
 
   return {
-    workspaceFolders: vscode.workspace.workspaceFolders?.map((folder) => ({
-      uri: folder.uri.toString(),
-      name: folder.name,
-    })),
+    workspaceFolders:
+      workspaceFolders?.map((folder) => ({
+        uri: folder.uri.toString(),
+        name: folder.name,
+      })) || [],
     workspaceFs: {
       rootContent: fsContent.map(([name, type]) => ({
         name,
@@ -646,6 +544,7 @@ function getConfig(): Record<string, unknown> {
  */
 function getWindowContext(): Record<string, unknown> {
   const activeEditor = vscode.window.activeTextEditor;
+  const activeTerminal = vscode.window.activeTerminal;
 
   return {
     activeTextEditor: activeEditor
@@ -688,15 +587,15 @@ function getWindowContext(): Record<string, unknown> {
           lineAt: activeEditor.document.lineAt(activeEditor.selection.start.line).text,
         }
       : undefined,
-    textEditorSelection: vscode.window.activeTextEditor
+    textEditorSelection: activeEditor
       ? {
           start: {
-            line: vscode.window.activeTextEditor.selection.start.line,
-            character: vscode.window.activeTextEditor.selection.start.character,
+            line: activeEditor.selection.start.line,
+            character: activeEditor.selection.start.character,
           },
           end: {
-            line: vscode.window.activeTextEditor.selection.end.line,
-            character: vscode.window.activeTextEditor.selection.end.character,
+            line: activeEditor.selection.end.line,
+            character: activeEditor.selection.end.character,
           },
         }
       : undefined,
@@ -704,15 +603,15 @@ function getWindowContext(): Record<string, unknown> {
       uri: editor.document.uri.toString(),
       languageId: editor.document.languageId,
     })),
-    activeTerminal: vscode.window.activeTerminal
+    activeTerminal: activeTerminal
       ? {
-          name: vscode.window.activeTerminal.name,
+          name: activeTerminal.name,
         }
       : undefined,
     terminals: vscode.window.terminals.map((terminal) => ({
       name: terminal.name,
     })),
-    activeEditorSelections: vscode.window.activeTextEditor?.selections.map((selection) => ({
+    activeEditorSelections: activeEditor?.selections.map((selection) => ({
       start: {
         line: selection.start.line,
         character: selection.start.character,
@@ -723,8 +622,11 @@ function getWindowContext(): Record<string, unknown> {
       },
     })),
     onDidChangeActiveTextEditor: 'vscode.window.onDidChangeActiveTextEditor (Subscription)',
-    onDidChangeWindowState: 'vscode.window.onDidChangeWindowState (Subscription)',
-    activeEditorLanguageId: vscode.window.activeTextEditor?.document.languageId,
+    onDidChangeWindowState: {
+      isFocused: vscode.window.state.focused,
+      // You can add more window state details here if needed
+    },
+    activeEditorLanguageId: activeEditor?.document.languageId,
   };
 }
 
@@ -742,25 +644,20 @@ function getLanguageContext(): Record<string, unknown> {
   const activeEditor = vscode.window.activeTextEditor;
   const activeDocument = activeEditor?.document;
 
-  if (!activeDocument) {
-    return {
-      activeEditorLanguageId: undefined,
-      availableLanguages: vscode.languages.getLanguages(),
-      languageFeatures: undefined,
-    };
-  }
+  const availableLanguages = vscode.languages.getLanguages();
+  const diagnostics = activeDocument ? vscode.languages.getDiagnostics(activeDocument.uri) : [];
+  const languageId = activeDocument?.languageId;
 
-  const languageId = activeDocument.languageId;
-  const diagnostics = vscode.languages.getDiagnostics(activeDocument.uri);
-
-  const languageSelector = {
-    language: languageId,
-    scheme: activeDocument.uri.scheme,
-  };
+  const languageSelector = activeDocument
+    ? {
+        language: languageId,
+        scheme: activeDocument.uri.scheme,
+      }
+    : null;
 
   return {
     activeEditorLanguageId: languageId,
-    availableLanguages: vscode.languages.getLanguages(),
+    availableLanguages: availableLanguages,
     languageFeatures: {
       diagnostics: {
         count: diagnostics.length,
@@ -788,21 +685,23 @@ function getLanguageContext(): Record<string, unknown> {
           },
         })),
       },
-      capabilities: {
-        completion: vscode.languages.match(languageSelector, activeDocument) > 0,
-        hover: vscode.languages.match(languageSelector, activeDocument) > 0,
-        definition: vscode.languages.match(languageSelector, activeDocument) > 0,
-        references: vscode.languages.match(languageSelector, activeDocument) > 0,
-        documentSymbols: vscode.languages.match(languageSelector, activeDocument) > 0,
-        codeActions: vscode.languages.match(languageSelector, activeDocument) > 0,
-        formatting: vscode.languages.match(languageSelector, activeDocument) > 0,
-        rename: vscode.languages.match(languageSelector, activeDocument) > 0,
-        folding: vscode.languages.match(languageSelector, activeDocument) > 0,
-        documentHighlight: vscode.languages.match(languageSelector, activeDocument) > 0,
-        documentLinks: vscode.languages.match(languageSelector, activeDocument) > 0,
-        color: vscode.languages.match(languageSelector, activeDocument) > 0,
-        linkedEditing: vscode.languages.match(languageSelector, activeDocument) > 0,
-      },
+      capabilities: languageSelector
+        ? {
+            completion: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            hover: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            definition: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            references: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            documentSymbols: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            codeActions: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            formatting: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            rename: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            folding: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            documentHighlight: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            documentLinks: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            color: vscode.languages.match(languageSelector, activeDocument!) > 0,
+            linkedEditing: vscode.languages.match(languageSelector, activeDocument!) > 0,
+          }
+        : null,
     },
   };
 }
@@ -820,39 +719,19 @@ function getDebugContext(): Record<string, unknown> {
   const activeSession = vscode.debug.activeDebugSession;
   const breakpoints = vscode.debug.breakpoints;
 
-  if (!activeSession) {
-    return {
-      activeDebugSession: undefined,
-      sessions: [],
-      breakpoints: {
-        count: breakpoints.length,
-        types: {
-          source: breakpoints.filter((bp) => 'location' in bp).length,
-          function: breakpoints.filter((bp) => 'functionName' in bp).length,
-          log: breakpoints.filter((bp) => 'logMessage' in bp).length,
-        },
-      },
-    };
-  }
-
   return {
-    activeDebugSession: {
-      type: activeSession.type,
-      name: activeSession.name,
-      configuration: activeSession.configuration,
-      workspaceFolder: activeSession.workspaceFolder?.uri.toString(),
-      isAttach: activeSession.configuration?.request === 'attach',
-      isLaunch: activeSession.configuration?.request === 'launch',
-      customRequest:
-        typeof activeSession.customRequest === 'function' ? 'Available' : 'Unavailable',
-    },
-    sessions: [
-      {
-        type: activeSession.type,
-        name: activeSession.name,
-        configuration: activeSession.configuration,
-      },
-    ],
+    activeDebugSession: activeSession
+      ? {
+          type: activeSession.type,
+          name: activeSession.name,
+          configuration: activeSession.configuration,
+          workspaceFolder: activeSession.workspaceFolder?.uri.toString(),
+          isAttach: activeSession.configuration?.request === 'attach',
+          isLaunch: activeSession.configuration?.request === 'launch',
+          customRequest:
+            typeof activeSession.customRequest === 'function' ? 'Available' : 'Unavailable',
+        }
+      : undefined,
     breakpoints: {
       count: breakpoints.length,
       types: {
@@ -873,30 +752,20 @@ function getDebugContext(): Record<string, unknown> {
  * - Source control root URI
  * - Current branch and state information
  */
-function getSourceControlContext(): Record<string, unknown> {
-  const repo = vscode.workspace.workspaceFolders?.[0]?.uri;
-
-  if (!repo) {
-    return {
-      repositories: [],
-      sourceControlRootUri: undefined,
-    };
-  }
-
+async function getSourceControlContext(): Promise<Record<string, unknown>> {
+  const gitExtension = vscode.extensions.getExtension('vscode.git');
+  const repositories = gitExtension?.exports.getAPI(1).repositories || [];
   return {
-    repositories: [
-      {
-        rootUri: repo.toString(),
-        providerId: 'vscode-context',
-        state: {
-          hasUncommittedChanges: false,
-          hasStagedChanges: false,
-          hasMergeConflicts: false,
-          currentBranch: 'main',
-        },
-      },
-    ],
-    sourceControlRootUri: repo.toString(),
+    repositories: repositories.map((repo: vscode.SourceControl) => ({
+      id: repo.id,
+      label: repo.label,
+      rootUri: repo.rootUri?.toString(),
+      count: repo.count,
+      commitTemplate: repo.commitTemplate,
+      acceptInputCommand: repo.acceptInputCommand?.command,
+      statusBarCommands: repo.statusBarCommands?.map((cmd: vscode.Command) => cmd.command),
+    })),
+    sourceControlRootUri: vscode.workspace.workspaceFolders?.[0]?.uri.toString(),
   };
 }
 
