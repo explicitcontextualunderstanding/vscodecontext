@@ -1,344 +1,42 @@
 # VSCode Context Extension
 
-[![Version](https://img.shields.io/badge/version-0.0.6-blue.svg)](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
+[![Version](https://img.shields.io/badge/version-0.0.7-blue.svg)](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/your-name.vscode-context)](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
 
-> Gain deep insights into your VSCode environment with comprehensive context information
+> Gain deep insights into your VSCode environment with comprehensive context information.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
+- [How to Generate Context](#how-to-generate-context)
 - [Development](#development)
 - [Contributing](#contributing)
 
 ## Features
 
-The VSCode Context extension provides detailed insights into your development environment:
+The VSCode Context extension provides detailed insights into your development
+environment. The following data is captured:
 
 ### Workspace Context
 
-- [x] Workspace folders and file structure
-- [x] Editor configuration (font size, tab size, etc.)
-- [x] File and search settings
+- Workspace folders and file structure
+- Editor configuration (font size, tab size, etc.)
+- File and search settings
 
 ### Window Context
 
-- [x] Active text editor information
-- [x] Visible text editors and their documents
-- [x] Terminal information and state
-- [x] Window focus and state changes
+- Active text editor information
+- Visible text editors and their documents
+- Terminal information and state
+- Window focus and state changes
 
 ### Language Context
 
-- [x] Active editor language ID
-- [x] Available languages
-- [x] Language diagnostics and capabilities
-
-## Quick Start
-
-1. Install from Marketplace:
-
-   ```bash
-   code --install-extension your-name.vscode-context
-   ```
-
-2. Open Command Palette (Ctrl+Shift+P) and run:
-
-   ```bash
-   VSCode Context: Extract Context
-   ```
-
-3. View the output in the "VSCode Context" channel
-
-## Configuration
-
-The extension can be configured through VSCode settings:
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `vscodeContext.showOnStartup` | Show context on VSCode startup | `false` |
-| `vscodeContext.refreshInterval` | Context refresh interval in seconds | `60` |
-
-## Generate Context with Extension
-
-To capture a more complete context, you need to actively use VS Code features before
-running the context extraction command. Here's a set of instructions to help generate
-a more comprehensive context:
-
-**General Setup:**
-
-1. **Open VS Code:** Start your Visual Studio Code instance.
-
-2. **Open a Workspace/Folder:**
-   - To capture workspace-related context, ensure you have a folder or workspace opened.
-   - **File > Open Folder...** or **File > Open Workspace from File...**
-
-3. **Open Files:**
-   To populate editor-related context:
-   - Open one or more files in the editor
-   - Use files with different languages to test
-     language-specific context
-   - Double-click files in the Explorer panel, or use **File > Open File...**
-
-4. **Interact with Files:**
-   - **Make a Selection:**
-     Select some text in one of the open editors.
-   - **Ensure an Active Editor:**
-     Make sure one of the opened files has focus (is the currently active tab).
-
-**Populating Specific Context Areas:**
-
-- **To Capture Workspace Context:**
-  - Have Multiple Folders (Optional):
-    If you want to test the `workspaceFolders` array with more than one entry,
-    open a workspace that contains multiple folders.
-
-- **To Capture Window Context:**
-  - Active Text Editor: Ensure you have an active editor (a file is open and focused).
-  - Text Editor's Document & Selection:
-    With an active editor, having a selection will populate
-    the `TextEditor.document` and `TextEditor.selection` information.
-  - Active Terminal: Open an integrated terminal.
-    - Terminal > New Terminal (or use the shortcut `Ctrl+` or `Cmd+`)
-  - Selections in Active Editor: Select some text in the active editor.
-  - Active Editor's Language ID: Open a file of a specific language (e.g., a `.js` file for JavaScript).
-
-- **To Capture Debug Context:**
-  - Start a Debug Session: Initiate a debugging session.
-    - Open a file you want to debug.
-    - Set a breakpoint (click in the gutter next to a line number).
-    - Go to the Run and Debug view (Ctrl+Shift+D or Cmd+Shift+D).
-    - Click "Run and Debug" and choose a debugger.
-      Let the session start (you don't need to let it run to completion).
-
-- **To Capture Source Control Context:**
-  - Open a Git Repository (or other SCM):
-    Open a folder or workspace that is initialized as a Git repository
-    (or another supported source control system).
-  - Have Changes (Optional):
-    Make some changes to a file in the repository (don't commit them yet).
-    This will help populate information about uncommitted changes.
-
-**Executing the Context Extraction:**
-
-1. **Open the Command Palette:** Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS).
-
-2. **Execute the Command:** Type or search for `VSCode Context: Extract Context` and press Enter.
-
-3. **View the Output:** The extracted context will be displayed in the "VSCode Context" output channel.
-
-**Important Considerations:**
-
-- **Timing:** Execute the `vscode-context.extractContext` command *after* performing the steps above.
-  The context captured reflects the state of VS Code at the exact moment the command is run.
-
-- **Specific Scenarios:** If you're trying to capture context related to a very specific VS Code feature
-  (e.g., a specific type of debug session, a particular source control action), make sure you are
-  actively engaging with that feature before running the command.
-
-- **Repeat for Different States:** To get a comprehensive view of the context your extension *can* access,
-  repeat these steps under different VS Code usage scenarios (e.g., with multiple files open,
-  with a debug session running, with a terminal active).
-By following these instructions, you should be able to generate a `vscodecontext.json` file
-that contains information for the previously "missing" context elements, provided those
-elements are active in your VS Code instance at the time of capture.
-
-## Development
-
-### Linting and Formatting Setup
-
-The project uses a comprehensive quality assurance setup:
-
-#### ESLint Configuration
-
-- Configuration file: `.eslintrc.cjs` (only ESLint configuration file)
-- Linting scope:
-  - Focused on `src/` directory
-  - Excludes test files (`*.test.ts`, `*.spec.ts`, `__tests__/`)
-- Ignored patterns:
-  - `node_modules/`
-  - `dist/`
-  - `out/`
-  - `coverage/`
-  - `*.min.js`
-  - `*.d.ts`
-- Extends:
-  - eslint:recommended
-  - @typescript-eslint/recommended
-  - prettier/recommended
-- Overrides:
-  - Specific rules for source files in `src/` directory
-
-#### Prettier Integration
-
-- Configuration file: `.prettierrc.json`
-- Integrated with ESLint through `eslint-config-prettier`
-- Automatic formatting on save
-
-#### MarkdownLint
-
-- Configuration file: `.markdownlint.json`
-- Lints all documentation files except:
-  - `node_modules/`
-  - `dist/`
-  - `out/`
-  - `coverage/`
-- Enforces consistent markdown formatting
-
-#### Pre-commit Hooks
-
-The project uses [husky](https://typicode.github.io/husky/) to run quality checks before each commit:
-
-- **Prettier**: Code formatting
-- **ESLint**: JavaScript/TypeScript linting
-- **MarkdownLint**: Documentation linting
-
-These checks are automatically run when you commit changes using the following command:
-
-```bash
-npm run format && npm run lint && npm run lint:markdown
-```
-
-#### TypeDoc Documentation
-
-- Configuration file: `typedoc.json`
-- Generates API documentation
-- Enforces documentation standards
-
-### Development Workflow
-
-The extension uses a modern development workflow with:
-
-- **TypeScript** for type-safe development
-- **Webpack** for optimized production builds
-- **ESLint** for code quality
-- **Prettier** for code formatting
-- **TypeDoc** for documentation generation
-- **MarkdownLint** for documentation quality
-=======
-
-### Documentation Standards
-
-All code should be documented using TypeDoc comments following these guidelines:
-
-- Use `/** */` for documentation blocks
-- Include descriptions for all public APIs
-- Use `@param` for function parameters
-- Use `@returns` for return values
-- Use `@example` for code examples
-
-### Building the Extension
-
-### Linting Prompt for Code Generation
-
-- ESLint:
-  - Enforce TypeScript best practices
-  - Follow code style rules
-  - Prevent common errors
-  - Maintain consistent code patterns
-
-- Prettier:
-  - Apply consistent formatting
-  - Maintain proper indentation
-  - Enforce code style rules
-  - Ensure consistent spacing and line breaks
-
-- TypeScript:
-  - Enforce type safety
-  - Validate interfaces and types
-  - Ensure proper type usage
-  - Catch type-related errors at compile time
-
-#### Requirements
-
-- package.json must include:
-  - `main` pointing to the entry file
-  - `activationEvents` defining when the extension activates
-  - `contributes` defining commands, menus, etc.
-  - `engines.vscode` specifying compatible VSCode version
-- Entry file must:
-  - Be a CommonJS module (extension.cjs.js)
-  - Export an `activate` function
-  - Export a `deactivate` function (optional)
-- Must be packaged using vsce (Visual Studio Code Extensions)
-- Output files must be included in .vscodeignore
-
-#### Build Configuration
-
-The extension uses CommonJS modules for VSCode compatibility. When making changes to the build configuration:
-
-- Use CommonJS require() syntax in webpack.config.js
-- Ensure output file is extension.cjs
-- Maintain ESLint configuration for CommonJS compatibility
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/your-name/vscode-context.git
-cd vscode-context
-```
-
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-=======
-
-1. Run the development build:
-
-```bash
-npm run build
-```
-
-1. Package extension:
-
-```bash
-npx vsce package
-```
-
-### Development Commands
-
-Development commands:
-
-| Command           | Description                                      |
-|-------------------|--------------------------------------------------|
-| `npm run build`   | Run quality checks and build production bundle   |
-| `npm run watch`   | Watch and rebuild on changes                     |
-| `npm run quality` | Run all quality checks (linting, formatting, docs) |
-| `npm run lint`    | Run ESLint checks                                |
-| `npm run format`  | Format code with Prettier                        |
-| `npm run lint:markdown` | Lint markdown files                          |
-| `npm run docs`    | Generate API documentation                       |
-
-### Module System Configuration
-
-The extension uses CommonJS modules for VSCode compatibility. Key configuration details:
-
-- Webpack configuration uses CommonJS require() syntax
-- Output file is extension.cjs
-- ESLint configured to allow CommonJS syntax in webpack.config.js
-- Package.json main field points to extension.cjs
-
-### Optimized Build Process
-
-The extension uses webpack to:
-
-- Bundle all dependencies into a single optimized file
-- Tree-shake unused code
-- Minify production builds
-- Generate source maps for debugging
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
----
-
-> **Note:** For detailed documentation and troubleshooting, visit our [documentation site](https://your-name.github.io/vscode-context)
+- Active editor language ID
+- Available languages
+- Language diagnostics and capabilities
 
 ### Debug Context
 
@@ -369,39 +67,283 @@ The extension provides these features through:
 - Dedicated output channel for context data
 - Event subscriptions for real-time updates
 
-## Installation
+## Quick Start
 
-1. Download the latest `.vsix` file
-2. Run:
+1. Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
+2. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
+3. Run the command: `VSCode Context: Extract Context`
+4. View the output in the "VSCode Context" output channel
 
-```bash
-code --install-extension vscode-context-{version}.vsix
+## Configuration
+
+The extension can be configured through VSCode settings. Use the VS Code settings UI and filter to `"vscode-context"`:
+
+You can configure which context categories are included in the extracted context:
+
+- **Workspace:** Includes information about your workspace folders,
+  file system, and recently opened files
+- **Window:** Includes information about the active window,
+  editors, terminals, selections, and window state
+- **Language:** Includes information about the current language,
+  diagnostics, available languages, and language features
+- **Debug:** Includes information about the active debug session,
+  breakpoints, and debug configurations
+- **Source Control:** Includes information about your git repositories,
+  branches, and commit templates
+- **Tasks:** Includes information about your configured tasks,
+  execution settings, and problem matchers
+- **Extension:** Includes information about the extension itself
+  (version, state, settings)
+- **Extension Host:** Includes information about the VS Code Extension host
+  (platform, process)
+- **Settings:** Includes the current VS Code settings
+- **Keybindings:** Includes the current VS Code Keybindings
+- **Theme:** Includes the current VS Code theme
+- **Views:** Includes information about the current VS Code views
+- **Custom Editors:** Includes information about any custom editors you have open
+
+## How to Generate Context
+
+To capture a more complete context, actively use VS Code features
+before running the context extraction command. Here's how:
+
+**General Setup:**
+
+1. **Open VS Code:**
+   Start your Visual Studio Code instance
+2. **Open a Workspace/Folder:**
+   Open a folder or workspace (`File > Open Folder...`
+   or `File > Open Workspace from File...`)
+3. **Open Files:**
+   Open one or more files (double-click or `File > Open File...`).
+   Use different languages to test language-specific context
+4. **Interact with Files:**
+   - Make a text selection
+   - Ensure one file has focus
+
+**Populating Specific Context Areas:**
+
+- **Workspace:** Open a workspace that contains multiple folders to test `workspaceFolders`
+- **Window:**
+  - Open a file, and make sure it has focus
+  - Make a selection
+  - Open an integrated terminal (`Ctrl+` `or`Cmd+``)
+- **Debug:**
+  - Open a file
+  - Set a breakpoint
+  - Go to the Run and Debug view (`Ctrl+Shift+D` or `Cmd+Shift+D`)
+  - Click "Run and Debug" (the session does not need to complete)
+- **Source Control:**
+  - Open a folder or workspace initialized as a Git repository
+  - Optionally make changes to a file (do not commit yet)
+
+**Executing the Context Extraction:**
+
+1. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
+2. Run the `VSCode Context: Extract Context` command
+3. View the output in the "VSCode Context" output channel
+
+**Important Notes:**
+
+- Execute the extraction command *after* performing the above steps.
+  The context reflects the state at the exact moment the command is run
+- Repeat these steps in different scenarios to get a full view of the
+  data accessible to the extension
+
+## Development
+
+The extension uses a modern development workflow with:
+
+- **TypeScript** for type-safe development
+- **Webpack** for optimized production builds
+- **ESLint** for code quality
+- **Prettier** for code formatting
+- **TypeDoc** for documentation generation
+- **MarkdownLint** for documentation quality
+
+### Build Configuration Files
+
+The project uses JSON configuration files to customize the build process:
+
+#### Available Configuration Files
+
+- `webpack.config.js`: Webpack build configuration
+- `.eslintrc.cjs`: ESLint configuration
+- `.prettierrc.json`: Prettier formatting rules
+- `.markdownlint.json`: Markdown linting rules
+- `typedoc.json`: TypeDoc documentation settings
+
+#### Customizing Build Configuration
+
+To modify build settings:
+
+1. Edit the appropriate configuration file
+2. Add custom settings following the JSON format
+3. Common customizations include:
+   - Adding new Webpack loaders
+   - Extending ESLint rules
+   - Customizing Prettier formatting
+   - Adding TypeDoc plugins
+
+#### Example: Adding a New Webpack Loader
+
+1. Open `webpack.config.js`
+2. Add the loader configuration:
+
+```javascript
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.custom$/,
+        use: ["custom-loader"]
+      }
+    ]
+  }
+};
 ```
 
-## Updating the Extension
-
-After making changes and rebuilding the extension, follow these steps to update:
-
-1. Build the new version:
+1. Install the required loader:
 
 ```bash
-vsce package
+npm install custom-loader --save-dev
 ```
 
-1. Uninstall the old version:
+### Linting and Formatting Setup
+
+The project uses a comprehensive quality assurance setup:
+
+#### ESLint Configuration
+
+- Configuration file: `.eslintrc.cjs` (only ESLint configuration file)
+- Linting scope: Focused on `src/` directory, excluding test files
+- Ignored patterns: `node_modules/`, `dist/`, `out/`, `coverage/`, `*.min.js`, `*.d.ts`
+- Extends: `eslint:recommended`, `@typescript-eslint/recommended`, `prettier/recommended`
+- Overrides: Specific rules for source files in `src/` directory
+
+#### Prettier Integration
+
+- Configuration file: `.prettierrc.json`
+- Integrated with ESLint through `eslint-config-prettier`
+- Automatic formatting on save
+
+#### MarkdownLint
+
+- Configuration file: `.markdownlint.json`
+- Lints all documentation files except `node_modules/`, `dist/`, `out/`, `coverage/`
+- Enforces consistent markdown formatting
+
+#### Pre-commit Hooks
+
+The project uses [husky](https://typicode.github.io/husky/)
+to run quality checks before each commit. The following
+command is run before each commit:
 
 ```bash
-code --uninstall-extension vscode-context-{old-version}.vsix
+npm run format && npm run lint && npm run lint:markdown
 ```
 
-1. Install the new version:
+#### TypeDoc Documentation
+
+- Configuration file: `typedoc.json`
+- Generates API documentation
+- Enforces documentation standards
+
+### Documentation Standards
+
+All code should be documented using TypeDoc comments following these guidelines:
+
+- Use `/** */` for documentation blocks
+- Include descriptions for all public APIs
+- Use `@param` for function parameters
+- Use `@returns` for return values
+- Use `@example` for code examples
+
+### Building the Extension
+
+#### Requirements
+
+- `package.json` must include:
+  - `main` pointing to the entry file
+  - `activationEvents` defining when the extension activates
+  - `contributes` defining commands, menus, etc.
+  - `engines.vscode` specifying the compatible VSCode version
+- Entry file must:
+  - Be a CommonJS module (`extension.cjs`)
+  - Export an `activate` function
+  - Export a `deactivate` function (optional)
+- Must be packaged using `vsce` (Visual Studio Code Extensions)
+- Output files must be included in `.vscodeignore`
+
+#### Build Configuration
+
+The extension uses CommonJS modules for VSCode compatibility. When making changes to the build configuration:
+
+- Use CommonJS `require()` syntax in `webpack.config.js`
+- Ensure the output file is `extension.cjs`
+- Maintain ESLint configuration for CommonJS compatibility
+
+#### Build Commands
+
+1. Clone the repository:
 
 ```bash
-code --install-extension vscode-context-{new-version}.vsix
+git clone https://github.com/your-name/vscode-context.git
+cd vscode-context
 ```
 
-Replace `{old-version}` and `{new-version}` with the appropriate version numbers.
+1. Install dependencies:
 
-## Usage
+```bash
+npm install
+```
 
-Open the Command Palette (Ctrl+Shift+P) and search for "Extract VSCode Context" to run the extension.
+1. Run the development build:
+
+```bash
+npm run build
+```
+
+1. Package extension:
+
+```bash
+npx vsce package
+```
+
+### Development Commands
+
+| Command               | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| `npm run build`       | Run quality checks and build production bundle               |
+| `npm run watch`       | Watch and rebuild on changes                                 |
+| `npm run quality`     | Run all quality checks (linting, formatting, docs)           |
+| `npm run lint`        | Run ESLint checks                                            |
+| `npm run format`      | Format code with Prettier                                    |
+| `npm run lint:markdown` | Lint markdown files                                          |
+| `npm run docs`        | Generate API documentation                                   |
+
+### Module System Configuration
+
+The extension uses CommonJS modules for VSCode compatibility. Key configuration details:
+
+- Webpack configuration uses CommonJS `require()` syntax
+- Output file is `extension.cjs`
+- ESLint is configured to allow CommonJS syntax in `webpack.config.js`
+- `package.json`'s `main` field points to `extension.cjs`
+
+### Optimized Build Process
+
+The extension uses Webpack to:
+
+- Bundle all dependencies into a single optimized file
+- Tree-shake unused code
+- Minify production builds
+- Generate source maps for debugging
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+---
+
+> **Note:** For detailed documentation and troubleshooting, visit our [documentation site](https://github.com/explicitcontextualunderstanding/vscodecontext)
