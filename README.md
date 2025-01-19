@@ -40,17 +40,17 @@ The VSCode Context extension provides detailed insights into your development en
 
 1. Install from Marketplace:
 
-```bash
-code --install-extension your-name.vscode-context
-```
+   ```bash
+   code --install-extension your-name.vscode-context
+   ```
 
-1. Open Command Palette (Ctrl+Shift+P) and run:
+2. Open Command Palette (Ctrl+Shift+P) and run:
 
-```bash
-VSCode Context: Extract Context
-```
+   ```bash
+   VSCode Context: Extract Context
+   ```
 
-1. View the output in the "VSCode Context" channel
+3. View the output in the "VSCode Context" channel
 
 ## Configuration
 
@@ -60,6 +60,90 @@ The extension can be configured through VSCode settings:
 |---------|-------------|---------|
 | `vscodeContext.showOnStartup` | Show context on VSCode startup | `false` |
 | `vscodeContext.refreshInterval` | Context refresh interval in seconds | `60` |
+
+## Generate Context with Extension
+
+To capture a more complete context, you need to actively use VS Code features before
+running the context extraction command. Here's a set of instructions to help generate
+a more comprehensive context:
+
+**General Setup:**
+
+1. **Open VS Code:** Start your Visual Studio Code instance.
+
+2. **Open a Workspace/Folder:**
+   - To capture workspace-related context, ensure you have a folder or workspace opened.
+   - **File > Open Folder...** or **File > Open Workspace from File...**
+
+3. **Open Files:**
+   To populate editor-related context:
+   - Open one or more files in the editor
+   - Use files with different languages to test
+     language-specific context
+   - Double-click files in the Explorer panel, or use **File > Open File...**
+
+4. **Interact with Files:**
+   - **Make a Selection:**
+     Select some text in one of the open editors.
+   - **Ensure an Active Editor:**
+     Make sure one of the opened files has focus (is the currently active tab).
+
+**Populating Specific Context Areas:**
+
+- **To Capture Workspace Context:**
+  - Have Multiple Folders (Optional):
+    If you want to test the `workspaceFolders` array with more than one entry,
+    open a workspace that contains multiple folders.
+
+- **To Capture Window Context:**
+  - Active Text Editor: Ensure you have an active editor (a file is open and focused).
+  - Text Editor's Document & Selection:
+    With an active editor, having a selection will populate
+    the `TextEditor.document` and `TextEditor.selection` information.
+  - Active Terminal: Open an integrated terminal.
+    - Terminal > New Terminal (or use the shortcut `Ctrl+` or `Cmd+`)
+  - Selections in Active Editor: Select some text in the active editor.
+  - Active Editor's Language ID: Open a file of a specific language (e.g., a `.js` file for JavaScript).
+
+- **To Capture Debug Context:**
+  - Start a Debug Session: Initiate a debugging session.
+    - Open a file you want to debug.
+    - Set a breakpoint (click in the gutter next to a line number).
+    - Go to the Run and Debug view (Ctrl+Shift+D or Cmd+Shift+D).
+    - Click "Run and Debug" and choose a debugger.
+      Let the session start (you don't need to let it run to completion).
+
+- **To Capture Source Control Context:**
+  - Open a Git Repository (or other SCM):
+    Open a folder or workspace that is initialized as a Git repository
+    (or another supported source control system).
+  - Have Changes (Optional):
+    Make some changes to a file in the repository (don't commit them yet).
+    This will help populate information about uncommitted changes.
+
+**Executing the Context Extraction:**
+
+1. **Open the Command Palette:** Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS).
+
+2. **Execute the Command:** Type or search for `VSCode Context: Extract Context` and press Enter.
+
+3. **View the Output:** The extracted context will be displayed in the "VSCode Context" output channel.
+
+**Important Considerations:**
+
+- **Timing:** Execute the `vscode-context.extractContext` command *after* performing the steps above.
+  The context captured reflects the state of VS Code at the exact moment the command is run.
+
+- **Specific Scenarios:** If you're trying to capture context related to a very specific VS Code feature
+  (e.g., a specific type of debug session, a particular source control action), make sure you are
+  actively engaging with that feature before running the command.
+
+- **Repeat for Different States:** To get a comprehensive view of the context your extension *can* access,
+  repeat these steps under different VS Code usage scenarios (e.g., with multiple files open,
+  with a debug session running, with a terminal active).
+By following these instructions, you should be able to generate a `vscodecontext.json` file
+that contains information for the previously "missing" context elements, provided those
+elements are active in your VS Code instance at the time of capture.
 
 ## Development
 
@@ -147,6 +231,26 @@ All code should be documented using TypeDoc comments following these guidelines:
 
 ### Building the Extension
 
+### Linting Prompt for Code Generation
+
+- ESLint:
+  - Enforce TypeScript best practices
+  - Follow code style rules
+  - Prevent common errors
+  - Maintain consistent code patterns
+
+- Prettier:
+  - Apply consistent formatting
+  - Maintain proper indentation
+  - Enforce code style rules
+  - Ensure consistent spacing and line breaks
+
+- TypeScript:
+  - Enforce type safety
+  - Validate interfaces and types
+  - Ensure proper type usage
+  - Catch type-related errors at compile time
+
 #### Requirements
 
 - package.json must include:
@@ -200,15 +304,15 @@ npx vsce package
 
 Development commands:
 
-| Command | Description |
-|---------|-------------|
-| `npm run build` | Run quality checks and build production bundle |
-| `npm run watch` | Watch and rebuild on changes |
+| Command           | Description                                      |
+|-------------------|--------------------------------------------------|
+| `npm run build`   | Run quality checks and build production bundle   |
+| `npm run watch`   | Watch and rebuild on changes                     |
 | `npm run quality` | Run all quality checks (linting, formatting, docs) |
-| `npm run lint` | Run ESLint checks |
-| `npm run format` | Format code with Prettier |
-| `npm run lint:markdown` | Lint markdown files |
-| `npm run docs` | Generate API documentation |
+| `npm run lint`    | Run ESLint checks                                |
+| `npm run format`  | Format code with Prettier                        |
+| `npm run lint:markdown` | Lint markdown files                          |
+| `npm run docs`    | Generate API documentation                       |
 
 ### Module System Configuration
 
