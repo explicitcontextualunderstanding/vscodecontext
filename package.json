@@ -11,6 +11,7 @@
     "vscode": "^1.96.0"
   },
   "dependencies": {
+    "eslint-plugin-sonarjs": "^3.0.1",
     "generator-code": "^1.11.5"
   },
   "main": "./out/extension.cjs",
@@ -46,6 +47,7 @@
     "husky": "^9.1.7",
     "markdownlint-cli": "^0.43.0",
     "prettier": "^3.0.0",
+    "sonarqube-scanner": "^4.2.6",
     "ts-loader": "^9.5.2",
     "typedoc": "^0.26.0",
     "typescript": "^5.6.0",
