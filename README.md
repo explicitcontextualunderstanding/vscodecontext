@@ -61,9 +61,8 @@ The extension can be configured through VSCode settings:
 | `vscodeContext.showOnStartup` | Show context on VSCode startup | `false` |
 | `vscodeContext.refreshInterval` | Context refresh interval in seconds | `60` |
 
-## Generate Context
+## Generate Context with Extension
 
-You're right, the "missing" status highlights the dynamic nature of VS Code's context.
 To capture a more complete context, you need to actively use VS Code features before
 running the context extraction command. Here's a set of instructions to help generate
 a more comprehensive context:
