@@ -4,3 +4,4 @@ docs/*
 docs/modules
 docs/functions
 *.vsix
+*.json
