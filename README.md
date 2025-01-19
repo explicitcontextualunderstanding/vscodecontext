@@ -3,7 +3,11 @@
 [![Version](https://img.shields.io/badge/version-0.0.7-blue.svg)](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/your-name.vscode-context)](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
 
-> Gain deep insights into your VSCode environment with comprehensive context information.
+Gain deep insights into your VSCode environment with comprehensive context information.
+This project currently provides a VSCode extension as the client to extract your context as a
+JSON output. In the near future, it will soon be able to write the context to your MCP memory
+server as entities, relations, and observations. Next, it will be the client to a standalone
+VSCode Context MCP Server.
 
 ## Table of Contents
 
@@ -69,7 +73,7 @@ The extension provides these features through:
 
 ## Quick Start
 
-1. Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=your-name.vscode-context)
+1. Install the VSIX extension the source directory where you installed this project and ran npm run build.
 2. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
 3. Run the command: `VSCode Context: Extract Context`
 4. View the output in the "VSCode Context" output channel
