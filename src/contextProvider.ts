@@ -335,7 +335,6 @@ export class ContextProvider {
       executionCommand = 'custom';
     }
 
-
     const baseInfo = {
       type: executionType,
       command: executionCommand,
@@ -516,7 +515,7 @@ export class ContextProvider {
 
   private getLanguageCapabilities(
     document: vscode.TextDocument | undefined,
-    selector: { language: string | undefined; scheme: string } | null
+    selector: { language: string | undefined; scheme: string } | null,
   ): Record<string, boolean> | null {
     if (!document || !selector) {
       return null;
