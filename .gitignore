@@ -6,3 +6,15 @@ docs/functions
 *.vsix
 *.json
 .aider*
+.aider.chat.history.md
+dist/
+coverage/
+.idea/
+.vscode/
+.DS_Store
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+.eslintcache
