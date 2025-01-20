@@ -317,19 +317,24 @@ export class ContextProvider {
       return { type: 'unknown' };
     }
 
-    const executionType =
-      execution instanceof vscode.ProcessExecution
-        ? 'process'
-        : execution instanceof vscode.ShellExecution
-          ? 'shell'
-          : 'custom';
+    let executionType: string;
+    if (execution instanceof vscode.ProcessExecution) {
+      executionType = 'process';
+    } else if (execution instanceof vscode.ShellExecution) {
+      executionType = 'shell';
+    } else {
+      executionType = 'custom';
+    }
 
-    const executionCommand =
-      execution instanceof vscode.ProcessExecution
-        ? execution.process
-        : execution instanceof vscode.ShellExecution
-          ? execution.commandLine
-          : 'custom';
+    let executionCommand: string;
+    if (execution instanceof vscode.ProcessExecution) {
+      executionCommand = execution.process;
+    } else if (execution instanceof vscode.ShellExecution) {
+      executionCommand = execution.commandLine ?? 'shell command';
+    } else {
+      executionCommand = 'custom';
+    }
+
 
     const baseInfo = {
       type: executionType,
@@ -504,24 +509,33 @@ export class ContextProvider {
             },
           })),
         },
-        capabilities: languageSelector
-          ? {
-              completion: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              hover: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              definition: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              references: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              documentSymbols: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              codeActions: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              formatting: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              rename: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              folding: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              documentHighlight: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              documentLinks: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              color: vscode.languages.match(languageSelector, activeDocument!) > 0,
-              linkedEditing: vscode.languages.match(languageSelector, activeDocument!) > 0,
-            }
-          : null,
+        capabilities: this.getLanguageCapabilities(activeDocument, languageSelector),
       },
+    };
+  }
+
+  private getLanguageCapabilities(
+    document: vscode.TextDocument | undefined,
+    selector: { language: string | undefined; scheme: string } | null
+  ): Record<string, boolean> | null {
+    if (!document || !selector) {
+      return null;
+    }
+
+    return {
+      completion: vscode.languages.match(selector, document) > 0,
+      hover: vscode.languages.match(selector, document) > 0,
+      definition: vscode.languages.match(selector, document) > 0,
+      references: vscode.languages.match(selector, document) > 0,
+      documentSymbols: vscode.languages.match(selector, document) > 0,
+      codeActions: vscode.languages.match(selector, document) > 0,
+      formatting: vscode.languages.match(selector, document) > 0,
+      rename: vscode.languages.match(selector, document) > 0,
+      folding: vscode.languages.match(selector, document) > 0,
+      documentHighlight: vscode.languages.match(selector, document) > 0,
+      documentLinks: vscode.languages.match(selector, document) > 0,
+      color: vscode.languages.match(selector, document) > 0,
+      linkedEditing: vscode.languages.match(selector, document) > 0,
     };
   }
 
