@@ -1,20 +1,33 @@
-node_modules
-out/
-docs/*
-docs/modules
-docs/functions
-*.vsix
-*.json
-.aider*
-.aider.chat.history.md
+# SonarQube
+.sonar/
+.sonar_lock
+report-task.txt
+ucfg2/
+
+# Node modules
+node_modules/
+
+# Build artifacts
 dist/
-coverage/
-.idea/
-.vscode/
-.DS_Store
+build/
 *.log
 *.tmp
-*.swp
-*.swo
-*.bak
-.eslintcache
+*.pid
+*.seed
+*.pid.lock
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
