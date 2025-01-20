@@ -1,0 +1,7 @@
+organization=explicitcontextualunderstanding
+projectKey=vscodecontext
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.58807
+dashboardUrl=https://sonarcloud.io/dashboard?id=vscodecontext
+ceTaskId=AZSFb4KVAsdQy0222LBz
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZSFb4KVAsdQy0222LBz
