@@ -135,9 +135,8 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const onDidRenameFiles = vscode.workspace.onDidRenameFiles((e: vscode.FileRenameEvent) => {
-    contextProvider.logger.log(
-      `Files renamed: ${e.files.map((f) => `${f.oldUri} -> ${f.newUri}`).join(', ')}`,
-    );
+    const renameMessages = e.files.map((f) => `${f.oldUri} -> ${f.newUri}`);
+    contextProvider.logger.log(`Files renamed: ${renameMessages.join(', ')}`);
   });
 
   // Add configuration monitoring
@@ -184,4 +183,10 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 }
 
-export function deactivate(): void {}
+export function deactivate(): void {
+  if (contextProvider) {
+    contextProvider.logger.log('Extension "vscode-context" is being deactivated');
+    // Perform any necessary cleanup
+    contextProvider = null!;
+  }
+}

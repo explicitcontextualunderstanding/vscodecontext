@@ -98,7 +98,17 @@ export class ContextProvider {
     history: [] as TerminalHistoryRecord[],
   };
 
-  constructor(private context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext) {
+    // Add configuration monitoring
+    vscode.workspace.onDidChangeConfiguration(() => {
+      this.logger.log('Configuration changed');
+    });
+
+    vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
+      const message = `Text document changed: ${e.document.uri}`;
+      this.logger.log(message);
+    });
+  }
 
   async getAllContext(includeCategories: string[]): Promise<ContextData> {
     const contextData: ContextData = {};
@@ -179,13 +189,20 @@ export class ContextProvider {
 
   getThemeContext(): Record<string, unknown> {
     const theme = vscode.window.activeColorTheme;
+    let themeKind: string;
+    switch (theme.kind) {
+      case vscode.ColorThemeKind.Light:
+        themeKind = 'Light';
+        break;
+      case vscode.ColorThemeKind.Dark:
+        themeKind = 'Dark';
+        break;
+      default:
+        themeKind = 'HighContrast';
+    }
+    
     return {
-      kind:
-        theme.kind === vscode.ColorThemeKind.Light
-          ? 'Light'
-          : theme.kind === vscode.ColorThemeKind.Dark
-            ? 'Dark'
-            : 'HighContrast',
+      kind: themeKind,
       customizations: vscode.workspace.getConfiguration('workbench').get('colorCustomizations'),
     };
   }
@@ -248,19 +265,46 @@ export class ContextProvider {
       workspaceFs: {
         rootContent: fsContent.map(([name, type]) => ({
           name,
-          type:
-            type === vscode.FileType.File
-              ? 'file'
-              : type === vscode.FileType.Directory
-                ? 'directory'
-                : type === vscode.FileType.SymbolicLink
-                  ? 'symlink'
-                  : 'unknown',
+          type: this.getFileTypeString(type)
         })),
       },
       recentFiles,
       configuration: this.getConfig(),
     };
+  }
+
+  private getFileTypeString(type: vscode.FileType): string {
+    switch (type) {
+      case vscode.FileType.File:
+        return 'file';
+      case vscode.FileType.Directory:
+        return 'directory';
+      case vscode.FileType.SymbolicLink:
+        return 'symlink';
+      default:
+        return 'unknown';
+    }
+  }
+
+  private getDiagnosticSeverityString(severity: vscode.DiagnosticSeverity): string {
+    switch (severity) {
+      case vscode.DiagnosticSeverity.Error:
+        return 'Error';
+      case vscode.DiagnosticSeverity.Warning:
+        return 'Warning';
+      case vscode.DiagnosticSeverity.Information:
+        return 'Information';
+      case vscode.DiagnosticSeverity.Hint:
+        return 'Hint';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  private getTaskScopeString(scope: string | vscode.WorkspaceFolder | vscode.TaskScope | undefined): string {
+    if (!scope || scope === vscode.TaskScope.Global) return 'Global';
+    if (scope === vscode.TaskScope.Workspace) return 'Workspace';
+    return typeof scope === 'string' ? scope : scope.uri.toString();
   }
 
   getConfig(): Record<string, unknown> {
@@ -408,16 +452,7 @@ export class ContextProvider {
           count: diagnostics.length,
           items: diagnostics.map((d) => ({
             message: d.message,
-            severity:
-              d.severity === vscode.DiagnosticSeverity.Error
-                ? 'Error'
-                : d.severity === vscode.DiagnosticSeverity.Warning
-                  ? 'Warning'
-                  : d.severity === vscode.DiagnosticSeverity.Information
-                    ? 'Information'
-                    : d.severity === vscode.DiagnosticSeverity.Hint
-                      ? 'Hint'
-                      : 'Unknown',
+            severity: this.getDiagnosticSeverityString(d.severity),
             range: {
               start: {
                 line: d.range.start.line,
@@ -504,27 +539,8 @@ export class ContextProvider {
           name: task.name,
           source: task.source,
           type: task.definition.type,
-          scope: task.scope
-            ? typeof task.scope === 'string'
-              ? task.scope
-              : (task.scope as vscode.WorkspaceFolder).uri.toString()
-            : 'Global',
-          execution:
-            task.execution instanceof vscode.ShellExecution
-              ? {
-                  type: 'ShellExecution',
-                  command: task.execution.command,
-                  args: task.execution.args,
-                }
-              : task.execution instanceof vscode.ProcessExecution
-                ? {
-                    type: 'ProcessExecution',
-                    process: task.execution.process,
-                    args: task.execution.args,
-                  }
-                : {
-                    type: 'Other',
-                  },
+          scope: this.getTaskScopeString(task.scope),
+          execution: this.getTaskExecutionInfo(task.execution),
           problemMatchers: task.problemMatchers,
           group: task.group ? task.group.id : undefined,
           presentationOptions: {
