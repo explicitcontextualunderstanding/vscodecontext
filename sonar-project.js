@@ -3,7 +3,7 @@ const scanner = require('sonarqube-scanner');
 scanner(
   {
     serverUrl: 'https://sonarcloud.io',
-    token: process.env.SONAR_TOKEN,
+    token: process.env.SONAR_TOKEN || process.env.SONAR_PROJECT_KEY,
     options: {
       'sonar.organization': 'explicitcontextualunderstanding',
       'sonar.projectKey': 'vscode-context',
