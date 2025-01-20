@@ -7,7 +7,7 @@ module.exports = {
   entry: './src/extension.ts',
   output: {
     path: path.resolve(__dirname, 'out'),
-    filename: 'extension.cjs.js',
+    filename: 'extension.js',
     libraryTarget: 'commonjs2',
     devtoolModuleFilenameTemplate: '../[resource-path]',
   },
@@ -20,6 +20,9 @@ module.exports = {
   ],
   resolve: {
     extensions: ['.ts', '.js'],
+    alias: {
+      '@': path.resolve(__dirname, 'src')
+    }
   },
   module: {
     rules: [
@@ -30,9 +33,8 @@ module.exports = {
           {
             loader: 'ts-loader',
             options: {
-              compilerOptions: {
-                sourceMap: true,
-              },
+              transpileOnly: true,
+              experimentalWatchApi: true,
             },
           },
         ],
@@ -40,13 +42,14 @@ module.exports = {
     ],
   },
   optimization: {
-    minimize: true,
+    minimize: false, // Disable minification for better debugging
     usedExports: true,
     sideEffects: true,
   },
   performance: {
-    hints: 'warning',
-    maxEntrypointSize: 512000,
-    maxAssetSize: 512000,
+    hints: false, // Disable performance hints for extensions
   },
+  stats: {
+    warnings: false
+  }
 };
