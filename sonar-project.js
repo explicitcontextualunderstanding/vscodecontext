@@ -11,6 +11,7 @@ console.log('Token length:', token.length);
 console.log('Organization:', 'explicitcontextualunderstanding');
 console.log('Project Key:', 'vscode-context');
 console.log('Project Name:', 'vscode-context');
+console.log('Project Version:', '0.0.7');
 
 // Verify token format
 if (!/^[a-f0-9]{40}$/i.test(token)) {
@@ -18,12 +19,18 @@ if (!/^[a-f0-9]{40}$/i.test(token)) {
   process.exit(1);
 }
 
+// Verify organization exists
+if (!process.env.SONAR_ORGANIZATION) {
+  console.error('Error: SONAR_ORGANIZATION environment variable is required');
+  process.exit(1);
+}
+
 scanner(
   {
     serverUrl: 'https://sonarcloud.io',
-    token: process.env.SONAR_TOKEN || process.env.SONAR_PROJECT_KEY,
+    token: token,
     options: {
-      'sonar.organization': 'explicitcontextualunderstanding',
+      'sonar.organization': process.env.SONAR_ORGANIZATION || 'explicitcontextualunderstanding',
       'sonar.projectKey': 'vscode-context',
       'sonar.projectName': 'vscode-context',
       'sonar.projectVersion': '0.0.7',
