@@ -98,7 +98,7 @@ export class ContextProvider {
     history: [] as TerminalHistoryRecord[],
   };
 
-  constructor(private readonly context: vscode.ExtensionContext) {
+  constructor(private readonly context: vscode.ExtensionContext) {}
     // Add configuration monitoring
     vscode.workspace.onDidChangeConfiguration(() => {
       this.logger.log('Configuration changed');
@@ -200,7 +200,7 @@ export class ContextProvider {
       default:
         themeKind = 'HighContrast';
     }
-    
+
     return {
       kind: themeKind,
       customizations: vscode.workspace.getConfiguration('workbench').get('colorCustomizations'),
@@ -265,7 +265,7 @@ export class ContextProvider {
       workspaceFs: {
         rootContent: fsContent.map(([name, type]) => ({
           name,
-          type: this.getFileTypeString(type)
+          type: this.getFileTypeString(type),
         })),
       },
       recentFiles,
@@ -301,10 +301,47 @@ export class ContextProvider {
     }
   }
 
-  private getTaskScopeString(scope: string | vscode.WorkspaceFolder | vscode.TaskScope | undefined): string {
+  private getTaskScopeString(
+    scope: string | vscode.WorkspaceFolder | vscode.TaskScope | undefined,
+  ): string {
     if (!scope || scope === vscode.TaskScope.Global) return 'Global';
     if (scope === vscode.TaskScope.Workspace) return 'Workspace';
-    return typeof scope === 'string' ? scope : scope.uri.toString();
+    const scopeString = typeof scope === 'string' ? scope : scope.uri.toString();
+    return scopeString;
+  }
+
+  private getTaskExecutionInfo(
+    execution?: vscode.ProcessExecution | vscode.ShellExecution | vscode.CustomExecution,
+  ): Record<string, unknown> {
+    if (!execution) {
+      return { type: 'unknown' };
+    }
+
+    const executionType = execution instanceof vscode.ProcessExecution
+      ? 'process'
+      : execution instanceof vscode.ShellExecution
+        ? 'shell'
+        : 'custom';
+
+    const executionCommand = execution instanceof vscode.ProcessExecution
+      ? execution.process
+      : execution instanceof vscode.ShellExecution
+        ? execution.commandLine
+        : 'custom';
+
+    const baseInfo = {
+      type: executionType,
+      command: executionCommand,
+    };
+
+    if (execution instanceof vscode.ProcessExecution && execution.args) {
+      return {
+        ...baseInfo,
+        args: execution.args,
+      };
+    }
+
+    return baseInfo;
   }
 
   getConfig(): Record<string, unknown> {
