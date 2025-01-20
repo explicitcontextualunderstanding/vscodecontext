@@ -1,0 +1,42 @@
+
+# 2025-01-20 08:45:18.162014
++y
+
+# 2025-01-20 08:45:21.148428
++/run git checkout backup-$(date +%Y%m%d-%H%M) -- path/to/specific/file
+
+# 2025-01-20 08:45:21.148657
++/run git checkout backup-$(date +%Y%m%d-%H%M) -- path/to/specific/file
+
+# 2025-01-20 08:45:26.735129
++y
+
+# 2025-01-20 08:45:34.205064
++can you use the gh commands
+
+# 2025-01-20 08:45:46.040831
++y
+
+# 2025-01-20 08:45:46.047520
++/run gh repo sync
+
+# 2025-01-20 08:45:46.047642
++/run gh repo sync
+
+# 2025-01-20 08:45:49.536394
++/run gh issue create --title "Preserve local changes" --body "Creating branch to preserve local changes before reset"
+
+# 2025-01-20 08:45:49.536515
++/run gh issue create --title "Preserve local changes" --body "Creating branch to preserve local changes before reset"
+
+# 2025-01-20 08:45:52.932036
++/run gh branch create backup-$(date +%Y%m%d-%H%M)
+
+# 2025-01-20 08:45:52.932409
++/run gh branch create backup-$(date +%Y%m%d-%H%M)
+
+# 2025-01-20 08:45:55.078789
++/run git add .
+
+# 2025-01-20 08:45:55.078893
++/run git add .
