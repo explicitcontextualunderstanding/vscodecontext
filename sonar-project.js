@@ -1,15 +1,27 @@
-const scanner = require('sonarqube-scanner');
+import scanner from 'sonarqube-scanner';
+import { env, exit } from 'process';
 
-scanner(
-  {
-    serverUrl: 'https://sonarcloud.io',
-    token: '${env:SONAR_PROJECT_KEY}', // Replace with your SonarCloud token
-    options: {
-      'sonar.organization': 'explicitcontextualunderstanding', // Replace with your organization key
-      'sonar.projectKey': 'sonar.projectKey',   // Replace with your project key
-      'sonar.sources': './src',                // Adjust to your source code directory
-      'sonar.exclusions': '**/*.test.js',      // Optional: Exclude test files or other patterns
-    },
-  },
-  () => process.exit(),
+const token = env.SONAR_TOKEN;
+if (!token) {
+  console.error('Error: SONAR_TOKEN environment variable is required');
+  exit(1);
+}
+
+scanner({
+  serverUrl: 'https://sonarcloud.io',
+  token: token,
+  options: {
+    'sonar.projectName': 'vscodecontext',
+    'sonar.projectKey': 'explicitcontextualunderstanding_vscodecontext',
+    'sonar.organization': 'explicitcontextualunderstanding',
+    'sonar.sources': 'src',
+    'sonar.tests': 'src',
+    'sonar.sourceEncoding': 'UTF-8',
+    'sonar.exclusions': '**/*.test.js,**/*.d.ts',
+    'sonar.typescript.lcov.reportPaths': 'coverage/lcov.info',
+    'sonar.javascript.lcov.reportPaths': 'coverage/lcov.info',
+    'sonar.typescript.tsconfigPath': 'tsconfig.json'
+  }
+},
+  () => exit()
 );
