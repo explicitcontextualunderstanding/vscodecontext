@@ -5,18 +5,20 @@ let contextProvider: ContextProvider;
 
 export function activate(context: vscode.ExtensionContext): void {
   contextProvider = new ContextProvider(context);
-  console.log('Congratulations, your extension "vscode-context" is now active!');
+  contextProvider.logger.log('Congratulations, your extension "vscode-context" is now active!');
 
   // Event subscriptions
   const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor((editor) => {
-    console.log('Active editor changed:', editor?.document.uri.toString());
+    contextProvider.logger.log(`Active editor changed: ${editor?.document.uri.toString()}`);
   });
 
   const onDidChangeWindowState = vscode.window.onDidChangeWindowState((state) => {
-    console.log('Window state changed:', {
-      focused: state.focused,
-      activeTerminal: vscode.window.activeTerminal?.name,
-    });
+    contextProvider.logger.log(
+      `Window state changed: ${JSON.stringify({
+        focused: state.focused,
+        activeTerminal: vscode.window.activeTerminal?.name,
+      })}`,
+    );
   });
 
   // Command registration
@@ -71,90 +73,88 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Add debug context monitoring
   const onDidStartDebugSession = vscode.debug.onDidStartDebugSession((session) => {
-    console.log('Debug session started:', session.name);
+    contextProvider.logger.log(`Debug session started: ${session.name}`);
   });
 
   const onDidTerminateDebugSession = vscode.debug.onDidTerminateDebugSession((session) => {
-    console.log('Debug session terminated:', session.name);
+    contextProvider.logger.log(`Debug session terminated: ${session.name}`);
   });
 
   const onDidChangeBreakpoints = vscode.debug.onDidChangeBreakpoints((e) => {
-    console.log('Breakpoints changed:', e.added, e.removed, e.changed);
+    contextProvider.logger.log(
+      `Breakpoints changed: added=${e.added}, removed=${e.removed}, changed=${e.changed}`,
+    );
   });
 
   // Add window state tracking
   const onDidChangeTextEditorSelection = vscode.window.onDidChangeTextEditorSelection(
     (e: vscode.TextEditorSelectionChangeEvent) => {
-      console.log('Text editor selection changed:', e.textEditor.document.uri);
+      contextProvider.logger.log(`Text editor selection changed: ${e.textEditor.document.uri}`);
     },
   );
 
   const onDidChangeTextEditorVisibleRanges = vscode.window.onDidChangeTextEditorVisibleRanges(
     (e: vscode.TextEditorVisibleRangesChangeEvent) => {
-      console.log('Text editor visible ranges changed:', e.textEditor.document.uri);
+      contextProvider.logger.log(
+        `Text editor visible ranges changed: ${e.textEditor.document.uri}`,
+      );
     },
   );
 
   const onDidChangeTextEditorViewColumn = vscode.window.onDidChangeTextEditorViewColumn(
     (e: vscode.TextEditorViewColumnChangeEvent) => {
-      console.log('Text editor view column changed:', e.textEditor.document.uri);
+      contextProvider.logger.log(`Text editor view column changed: ${e.textEditor.document.uri}`);
     },
   );
 
   // Add language feature monitoring
   const onDidChangeDiagnostics = vscode.languages.onDidChangeDiagnostics(
     (e: vscode.DiagnosticChangeEvent) => {
-      console.log(
-        'Diagnostics changed:',
-        e.uris.map((uri: vscode.Uri) => uri.toString()),
+      contextProvider.logger.log(
+        `Diagnostics changed: ${e.uris.map((uri: vscode.Uri) => uri.toString()).join(', ')}`,
       );
     },
   );
 
   // Add extension context usage
   const onDidChangeExtensions = vscode.extensions.onDidChange(() => {
-    console.log('Extensions changed');
+    contextProvider.logger.log('Extensions changed');
   });
 
   // Add workspace file monitoring
   const onDidCreateFiles = vscode.workspace.onDidCreateFiles((e: vscode.FileCreateEvent) => {
-    console.log(
-      'Files created:',
-      e.files.map((f: vscode.Uri) => f.toString()),
+    contextProvider.logger.log(
+      `Files created: ${e.files.map((f: vscode.Uri) => f.toString()).join(', ')}`,
     );
   });
 
   const onDidDeleteFiles = vscode.workspace.onDidDeleteFiles((e: vscode.FileDeleteEvent) => {
-    console.log(
-      'Files deleted:',
-      e.files.map((f: vscode.Uri) => f.toString()),
+    contextProvider.logger.log(
+      `Files deleted: ${e.files.map((f: vscode.Uri) => f.toString()).join(', ')}`,
     );
   });
 
   const onDidRenameFiles = vscode.workspace.onDidRenameFiles((e: vscode.FileRenameEvent) => {
-    console.log(
-      'Files renamed:',
-      e.files.map((f) => `${f.oldUri} -> ${f.newUri}`),
+    contextProvider.logger.log(
+      `Files renamed: ${e.files.map((f) => `${f.oldUri} -> ${f.newUri}`).join(', ')}`,
     );
   });
 
   // Add configuration monitoring
   const onDidChangeConfiguration = vscode.workspace.onDidChangeConfiguration(() => {
-    console.log('Configuration changed');
+    contextProvider.logger.log('Configuration changed');
   });
 
   const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(
     (e: vscode.TextDocumentChangeEvent) => {
-      console.log('Text document changed:', e.document.uri);
+      contextProvider.logger.log(`Text document changed: ${e.document.uri}`);
     },
   );
 
   const onDidChangeWorkspaceFolders = vscode.workspace.onDidChangeWorkspaceFolders(
     (e: vscode.WorkspaceFoldersChangeEvent) => {
-      console.log(
-        'Workspace folders changed:',
-        e.added.map((folder) => folder.uri.toString()),
-        e.removed.map((folder) => folder.uri.toString()),
+      contextProvider.logger.log(
+        `Workspace folders changed: added=${e.added.map((folder) => folder.uri.toString()).join(', ')}, removed=${e.removed.map((folder) => folder.uri.toString()).join(', ')}`,
       );
     },
   );
