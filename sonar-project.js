@@ -7,9 +7,16 @@ if (!token) {
 }
 
 console.log('Using Sonar token:', token ? `${token.slice(0, 4)}...${token.slice(-4)}` : 'none');
+console.log('Token length:', token.length);
 console.log('Organization:', 'explicitcontextualunderstanding');
 console.log('Project Key:', 'vscode-context');
 console.log('Project Name:', 'vscode-context');
+
+// Verify token format
+if (!/^[a-f0-9]{40}$/i.test(token)) {
+  console.error('Error: Invalid token format. Token should be 40-character hexadecimal string');
+  process.exit(1);
+}
 
 scanner(
   {
