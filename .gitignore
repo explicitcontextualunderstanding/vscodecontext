@@ -6,3 +6,4 @@ docs/functions
 *.vsix
 *.json
 .aider*
+.aider.chat.history.md
