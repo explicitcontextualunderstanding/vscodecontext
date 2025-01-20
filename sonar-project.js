@@ -7,6 +7,9 @@ if (!token) {
 }
 
 console.log('Using Sonar token:', token ? `${token.slice(0, 4)}...${token.slice(-4)}` : 'none');
+console.log('Organization:', 'explicitcontextualunderstanding');
+console.log('Project Key:', 'vscode-context');
+console.log('Project Name:', 'vscode-context');
 
 scanner(
   {
