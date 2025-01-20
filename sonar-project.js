@@ -1,57 +1,27 @@
-const scanner = require('sonarqube-scanner');
+import scanner from 'sonarqube-scanner';
+import { env, exit } from 'process';
 
-const token = process.env.SONAR_TOKEN || process.env.SONAR_PROJECT_KEY;
+const token = env.SONAR_TOKEN;
 if (!token) {
-  console.error('Error: SONAR_TOKEN or SONAR_PROJECT_KEY environment variable is required');
-  process.exit(1);
+  console.error('Error: SONAR_TOKEN environment variable is required');
+  exit(1);
 }
 
-console.log('Using Sonar token:', token ? `${token.slice(0, 4)}...${token.slice(-4)}` : 'none');
-console.log('Token length:', token.length);
-console.log('Organization:', 'explicitcontextualunderstanding');
-console.log('Project Key:', 'vscode-context');
-console.log('Project Name:', 'vscode-context');
-console.log('Project Version:', '0.0.7');
-
-// Verify token format
-if (!/^[a-f0-9]{40}$/i.test(token)) {
-  console.error('Error: Invalid token format. Token should be 40-character hexadecimal string');
-  process.exit(1);
-}
-
-// Verify organization exists
-if (!process.env.SONAR_ORGANIZATION) {
-  console.error('Error: SONAR_ORGANIZATION environment variable is required');
-  process.exit(1);
-}
-
-scanner(
-  {
-    serverUrl: 'https://sonarcloud.io',
-    options: {
-      'sonar.login': token,
-      'sonar.organization': process.env.SONAR_ORGANIZATION || 'explicitcontextualunderstanding',
-      'sonar.projectKey': 'vscode-context',
-      'sonar.projectName': 'vscode-context',
-      'sonar.projectVersion': '0.0.7',
-      'sonar.sources': './src',
-      'sonar.tests': './src',
-      'sonar.sourceEncoding': 'UTF-8',
-      'sonar.exclusions': '**/*.test.js, **/*.d.ts',
-      'sonar.typescript.lcov.reportPaths': 'coverage/lcov.info',
-      'sonar.javascript.lcov.reportPaths': 'coverage/lcov.info',
-      'sonar.eslint.reportPaths': 'eslint-report.json',
-      'sonar.typescript.tsconfigPath': './tsconfig.json',
-      'sonar.qualitygate.wait': true,
-      'sonar.verbose': 'true'
-    },
-  },
-  (error) => {
-    if (error) {
-      console.error('SonarQube analysis failed:', error);
-      process.exit(1);
-    }
-    console.log('SonarQube analysis completed successfully');
-    process.exit(0);
+scanner({
+  serverUrl: 'https://sonarcloud.io',
+  token: token,
+  options: {
+    'sonar.projectName': 'vscodecontext',
+    'sonar.projectKey': 'explicitcontextualunderstanding_vscodecontext',
+    'sonar.organization': 'explicitcontextualunderstanding',
+    'sonar.sources': 'src',
+    'sonar.tests': 'src',
+    'sonar.sourceEncoding': 'UTF-8',
+    'sonar.exclusions': '**/*.test.js,**/*.d.ts',
+    'sonar.typescript.lcov.reportPaths': 'coverage/lcov.info',
+    'sonar.javascript.lcov.reportPaths': 'coverage/lcov.info',
+    'sonar.typescript.tsconfigPath': 'tsconfig.json'
   }
+},
+  () => exit()
 );

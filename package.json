@@ -5,7 +5,7 @@
   "publisher": "your-name",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-name/vscode-context.git"
+    "url": "git@github.com:explicitcontextualunderstanding/vscodecontext.git"
   },
   "engines": {
     "vscode": "^1.96.0"
@@ -36,7 +36,8 @@
     "lint:markdown": "markdownlint '**/*.md' --ignore 'node_modules/**' --ignore 'dist/**' --ignore 'out/**' --ignore 'coverage/**'",
     "format": "prettier --write src/**/*.ts",
     "prepare": "husky install",
-    "sonar": "npx sonarqube-scanner"
+    "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
+    "postbuild": "npm run sonar"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
