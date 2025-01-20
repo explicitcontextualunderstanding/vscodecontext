@@ -12,7 +12,7 @@ export interface ContextData {
 
 // Cache interface for the vscodecontext extension
 export class ContextCache {
-  private cache: NodeCache;
+  private readonly cache: NodeCache;
 
   constructor(ttlSeconds: number = 3600) {
     this.cache = new NodeCache({

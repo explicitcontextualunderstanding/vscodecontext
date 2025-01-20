@@ -3,7 +3,7 @@ import { ContextProvider } from './contextProvider';
 
 let contextProvider: ContextProvider;
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(context: Readonly<vscode.ExtensionContext>): void {
   contextProvider = new ContextProvider(context);
   contextProvider.logger.log('Congratulations, your extension "vscode-context" is now active!');
 
