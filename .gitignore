@@ -31,3 +31,15 @@ build/
 *.njsproj
 *.sln
 *.sw?
+
+# Aider files
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v3/
+
+# Documentation and output
+docs/
+out/
+
+# Configuration files
+vscodecontext.json
