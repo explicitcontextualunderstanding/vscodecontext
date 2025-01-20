@@ -1,45 +1,14 @@
-# SonarQube
-.sonar/
-.sonar_lock
-report-task.txt
-ucfg2/
-
-# Node modules
-node_modules/
-
-# Build artifacts
-dist/
-build/
-*.log
-*.tmp
-*.pid
-*.seed
-*.pid.lock
-
-# Environment files
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Aider files
-.aider.chat.history.md
-.aider.input.history
-.aider.tags.cache.v3/
-
-# Documentation and output
-docs/
 out/
-
-# Configuration files
+coverage/
+node_modules/
+.vscode/
+.idea/
+*.map
+*.vsix
+.env
+.sonarlint/
+dist/
+.aider.*
+.sonar/
+docs/
 vscodecontext.json
