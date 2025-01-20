@@ -86,7 +86,13 @@ export interface ContextData {
   customEditors?: Record<string, unknown>[];
 }
 
+import { Logger } from './loggingInterface';
+import { ProductionLogger } from './productionLogger';
+import { DevelopmentLogger } from './developmentLogger';
+
 export class ContextProvider {
+  logger: Logger =
+    process.env.NODE_ENV === 'production' ? new ProductionLogger() : new DevelopmentLogger();
   terminalTracker = {
     active: new Map<string, TerminalInfo>(),
     history: [] as TerminalHistoryRecord[],
