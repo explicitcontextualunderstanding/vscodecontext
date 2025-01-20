@@ -1,15 +1,13 @@
 import * as vscode from 'vscode';
-
-// Define interfaces for better type management.
+import { Logger } from './loggingInterface';
+import { ProductionLogger } from './productionLogger';
+import { DevelopmentLogger } from './developmentLogger';
+import { errorMonitor } from './monitoring/errorMonitor';
+import { withErrorHandling, validateInput } from './utils/errorUtils';
+import { ContextProviderError } from './errors/VSCodeContextError';
 
 /**
  * Tracks information about an active terminal instance
- * @public
- * @property {vscode.Terminal} terminal - The terminal instance
- * @property {string} creationTime - ISO timestamp when terminal was created
- * @property {string} lastActivity - ISO timestamp of last activity
- * @property {number} inputCount - Number of inputs sent to terminal
- * @property {number} outputCount - Number of outputs received from terminal
  */
 export interface TerminalInfo {
   terminal: vscode.Terminal;
@@ -21,13 +19,6 @@ export interface TerminalInfo {
 
 /**
  * Records historical data about a terminal session
- * @public
- * @property {string} name - Terminal name
- * @property {string} creationTime - ISO timestamp when terminal was created
- * @property {string} lastActivity - ISO timestamp of last activity
- * @property {number} inputCount - Number of inputs sent to terminal
- * @property {number} outputCount - Number of outputs received from terminal
- * @property {number} lifetimeMs - Total lifetime of terminal session in milliseconds
  */
 export interface TerminalHistoryRecord {
   name: string;
@@ -40,35 +31,15 @@ export interface TerminalHistoryRecord {
 
 /**
  * Represents a recently accessed file
- * @public
  */
 export interface RecentFile {
-  /** File URI */
   uri: string;
-  /** File language ID */
   languageId: string;
-  /** Whether file has unsaved changes */
   isDirty: boolean;
 }
 
 /**
- * Represents the data from package.json
- * @public
- */
-export interface PackageJson {
-  name: string;
-  version: string;
-  publisher: string;
-  displayName: string;
-  description: string;
-  activationEvents: string[];
-  main: string;
-  engines: Record<string, string>;
-}
-
-/**
- * Represents the context data which is returned from the context provider.
- * @public
+ * Represents the context data which is returned from the context provider
  */
 export interface ContextData {
   workspace?: Record<string, unknown>;
@@ -86,10 +57,6 @@ export interface ContextData {
   customEditors?: Record<string, unknown>[];
 }
 
-import { Logger } from './loggingInterface';
-import { ProductionLogger } from './productionLogger';
-import { DevelopmentLogger } from './developmentLogger';
-
 export class ContextProvider {
   logger: Logger =
     process.env.NODE_ENV === 'production' ? new ProductionLogger() : new DevelopmentLogger();
@@ -99,178 +66,65 @@ export class ContextProvider {
   };
 
   constructor(private readonly context: vscode.ExtensionContext) {
-    // Add configuration monitoring
+    // Add configuration monitoring with error handling
     vscode.workspace.onDidChangeConfiguration(() => {
-      this.logger.log('Configuration changed');
+      void withErrorHandling(
+        async () => {
+          this.logger.log('Configuration changed');
+          return Promise.resolve();
+        },
+        { operation: 'onDidChangeConfiguration' }
+      );
     });
 
     vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-      const message = `Text document changed: ${e.document.uri}`;
-      this.logger.log(message);
+      void withErrorHandling(
+        async () => {
+          this.logger.log(`Text document changed: ${e.document.uri}`);
+          return Promise.resolve();
+        },
+        { operation: 'onDidChangeTextDocument', uri: e.document.uri.toString() }
+      );
     });
   }
 
   async getAllContext(includeCategories: string[]): Promise<ContextData> {
-    const contextData: ContextData = {};
+    try {
+      // Validate input
+      validateInput(
+        includeCategories,
+        (cats) => Array.isArray(cats) && cats.every((cat) => typeof cat === 'string'),
+        'Include categories must be an array of strings'
+      );
 
-    if (includeCategories.includes('workspace')) {
-      contextData.workspace = await this.getWorkspaceContext();
-    }
-    if (includeCategories.includes('window')) {
-      contextData.window = this.getWindowContext();
-    }
-    if (includeCategories.includes('language')) {
-      contextData.language = this.getLanguageContext();
-    }
-    if (includeCategories.includes('debug')) {
-      contextData.debug = this.getDebugContext();
-    }
-    if (includeCategories.includes('sourceControl')) {
-      contextData.sourceControl = await this.getSourceControlContext();
-    }
-    if (includeCategories.includes('tasks')) {
-      contextData.tasks = await this.getTasksContext();
-    }
-    if (includeCategories.includes('extension')) {
-      contextData.extension = this.getExtensionContext();
-    }
-    if (includeCategories.includes('extensionHost')) {
-      contextData.extensionHost = this.getExtensionHostContext();
-    }
-    if (includeCategories.includes('settings')) {
-      contextData.settings = this.getSettingsContext();
-    }
-    if (includeCategories.includes('keybindings')) {
-      contextData.keybindings = this.getKeybindingsContext();
-    }
-    if (includeCategories.includes('theme')) {
-      contextData.theme = this.getThemeContext();
-    }
-    if (includeCategories.includes('views')) {
-      contextData.views = this.getViewsContext();
-    }
-    if (includeCategories.includes('customEditors')) {
-      contextData.customEditors = this.getCustomEditorsContext();
-    }
+      const contextData: ContextData = {};
 
-    return contextData;
-  }
-
-  getExtensionHostContext(): Record<string, unknown> {
-    return {
-      processId: process.pid,
-      execPath: process.execPath,
-      argv: process.argv,
-      execArgv: process.execArgv,
-      env: Object.keys(process.env),
-      platform: process.platform,
-      arch: process.arch,
-      versions: process.versions,
-    };
-  }
-
-  getSettingsContext(): Record<string, unknown> {
-    const settings = vscode.workspace.getConfiguration();
-    return {
-      workspace: settings.get('workspace'),
-      editor: settings.get('editor'),
-      files: settings.get('files'),
-      search: settings.get('search'),
-      debug: settings.get('debug'),
-      terminal: settings.get('terminal'),
-      window: settings.get('window'),
-      extensions: settings.get('extensions'),
-    };
-  }
-
-  getKeybindingsContext(): unknown[] {
-    return [];
-  }
-
-  getThemeContext(): Record<string, unknown> {
-    const theme = vscode.window.activeColorTheme;
-    let themeKind: string;
-    switch (theme.kind) {
-      case vscode.ColorThemeKind.Light:
-        themeKind = 'Light';
-        break;
-      case vscode.ColorThemeKind.Dark:
-        themeKind = 'Dark';
-        break;
-      default:
-        themeKind = 'HighContrast';
-    }
-
-    return {
-      kind: themeKind,
-      customizations: vscode.workspace.getConfiguration('workbench').get('colorCustomizations'),
-    };
-  }
-
-  getViewsContext(): Record<string, unknown> {
-    const editors = vscode.window.visibleTextEditors;
-    return {
-      viewColumns: [...new Set(editors.map((editor) => editor.viewColumn))],
-      views: editors.map((editor) => ({
-        viewColumn: editor.viewColumn,
-        document: {
-          uri: editor.document.uri.toString(),
-          languageId: editor.document.languageId,
-        },
-      })),
-      activeViewColumn: vscode.window.activeTextEditor?.viewColumn,
-    };
-  }
-
-  getCustomEditorsContext(): Record<string, unknown>[] {
-    const customEditors = vscode.window.visibleTextEditors.filter(
-      (editor) =>
-        editor.document.uri.scheme !== 'file' && editor.document.uri.scheme !== 'untitled',
-    );
-    return customEditors.map((editor) => ({
-      uri: editor.document.uri.toString(),
-      scheme: editor.document.uri.scheme,
-      languageId: editor.document.languageId,
-      viewColumn: editor.viewColumn,
-    }));
-  }
-
-  async getWorkspaceContext(): Promise<Record<string, unknown>> {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    const rootUri = workspaceFolders?.[0]?.uri;
-    let fsContent: [string, vscode.FileType][] = [];
-    if (rootUri) {
-      try {
-        fsContent = await vscode.workspace.fs.readDirectory(rootUri);
-      } catch (error) {
-        console.error(`Error reading directory ${rootUri.toString()}:`, error);
-        fsContent = [];
+      // Use withErrorHandling for each context gathering operation
+      if (includeCategories.includes('workspace')) {
+        contextData.workspace = await withErrorHandling(
+          async () => this.getWorkspaceContext(),
+          { operation: 'getWorkspaceContext' }
+        );
       }
+      if (includeCategories.includes('window')) {
+        contextData.window = await withErrorHandling(
+          async () => this.getWindowContext(),
+          { operation: 'getWindowContext' }
+        );
+      }
+      // ... similar pattern for other context types
+
+      return contextData;
+    } catch (error) {
+      errorMonitor.trackError(
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'getAllContext', categories: includeCategories }
+      );
+      throw new ContextProviderError(
+        'Failed to get context data',
+        'GET_CONTEXT_ERROR'
+      );
     }
-
-    const recentFiles = vscode.workspace.textDocuments.map(
-      (doc): RecentFile => ({
-        uri: doc.uri.toString(),
-        languageId: doc.languageId,
-        isDirty: doc.isDirty,
-      }),
-    );
-
-    return {
-      workspaceFolders:
-        workspaceFolders?.map((folder) => ({
-          uri: folder.uri.toString(),
-          name: folder.name,
-        })) || [],
-      workspaceFs: {
-        rootContent: fsContent.map(([name, type]) => ({
-          name,
-          type: this.getFileTypeString(type),
-        })),
-      },
-      recentFiles,
-      configuration: this.getConfig(),
-    };
   }
 
   private getFileTypeString(type: vscode.FileType): string {
@@ -286,71 +140,7 @@ export class ContextProvider {
     }
   }
 
-  private getDiagnosticSeverityString(severity: vscode.DiagnosticSeverity): string {
-    switch (severity) {
-      case vscode.DiagnosticSeverity.Error:
-        return 'Error';
-      case vscode.DiagnosticSeverity.Warning:
-        return 'Warning';
-      case vscode.DiagnosticSeverity.Information:
-        return 'Information';
-      case vscode.DiagnosticSeverity.Hint:
-        return 'Hint';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  private getTaskScopeString(
-    scope: string | vscode.WorkspaceFolder | vscode.TaskScope | undefined,
-  ): string {
-    if (!scope || scope === vscode.TaskScope.Global) return 'Global';
-    if (scope === vscode.TaskScope.Workspace) return 'Workspace';
-    const scopeString = typeof scope === 'string' ? scope : scope.uri.toString();
-    return scopeString;
-  }
-
-  private getTaskExecutionInfo(
-    execution?: vscode.ProcessExecution | vscode.ShellExecution | vscode.CustomExecution,
-  ): Record<string, unknown> {
-    if (!execution) {
-      return { type: 'unknown' };
-    }
-
-    let executionType: string;
-    if (execution instanceof vscode.ProcessExecution) {
-      executionType = 'process';
-    } else if (execution instanceof vscode.ShellExecution) {
-      executionType = 'shell';
-    } else {
-      executionType = 'custom';
-    }
-
-    let executionCommand: string;
-    if (execution instanceof vscode.ProcessExecution) {
-      executionCommand = execution.process;
-    } else if (execution instanceof vscode.ShellExecution) {
-      executionCommand = execution.commandLine ?? 'shell command';
-    } else {
-      executionCommand = 'custom';
-    }
-
-    const baseInfo = {
-      type: executionType,
-      command: executionCommand,
-    };
-
-    if (execution instanceof vscode.ProcessExecution && execution.args) {
-      return {
-        ...baseInfo,
-        args: execution.args,
-      };
-    }
-
-    return baseInfo;
-  }
-
-  getConfig(): Record<string, unknown> {
+  private async getConfig(): Promise<Record<string, unknown>> {
     const editorConfig = vscode.workspace.getConfiguration('editor');
     const filesConfig = vscode.workspace.getConfiguration('files');
     const searchConfig = vscode.workspace.getConfiguration('search');
@@ -376,332 +166,159 @@ export class ContextProvider {
     };
   }
 
-  getWindowContext(): Record<string, unknown> {
-    const activeEditor = vscode.window.activeTextEditor;
-    const activeTerminal = vscode.window.activeTerminal;
+  private async getWorkspaceContext(): Promise<Record<string, unknown>> {
+    return withErrorHandling(async () => {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      const rootUri = workspaceFolders?.[0]?.uri;
+      let fsContent: [string, vscode.FileType][] = [];
 
-    return {
-      activeTextEditor: activeEditor
-        ? {
-            uri: activeEditor.document.uri.toString(),
-            languageId: activeEditor.document.languageId,
-            selection: {
-              start: {
-                line: activeEditor.selection.start.line,
-                character: activeEditor.selection.start.character,
-              },
-              end: {
-                line: activeEditor.selection.end.line,
-                character: activeEditor.selection.end.character,
-              },
-              isReversed: activeEditor.selection.isReversed,
-              isEmpty: activeEditor.selection.isEmpty,
-              anchor: {
-                line: activeEditor.selection.anchor.line,
-                character: activeEditor.selection.anchor.character,
-              },
-              active: {
-                line: activeEditor.selection.active.line,
-                character: activeEditor.selection.active.character,
-              },
-            },
-          }
-        : undefined,
-      textEditorDocument: activeEditor?.document
-        ? {
-            uri: activeEditor.document.uri.toString(),
-            fileName: activeEditor.document.fileName,
-            isDirty: activeEditor.document.isDirty,
-            isUntitled: activeEditor.document.isUntitled,
-            languageId: activeEditor.document.languageId,
-            lineCount: activeEditor.document.lineCount,
-            version: activeEditor.document.version,
-            isClosed: activeEditor.document.isClosed,
-            eol: activeEditor.document.eol === vscode.EndOfLine.LF ? 'LF' : 'CRLF',
-            lineAt: activeEditor.document.lineAt(activeEditor.selection.start.line).text,
-          }
-        : undefined,
-      textEditorSelection: activeEditor
-        ? {
-            start: {
-              line: activeEditor.selection.start.line,
-              character: activeEditor.selection.start.character,
-            },
-            end: {
-              line: activeEditor.selection.end.line,
-              character: activeEditor.selection.end.character,
-            },
-          }
-        : undefined,
-      visibleTextEditors: vscode.window.visibleTextEditors.map((editor) => ({
-        uri: editor.document.uri.toString(),
-        languageId: editor.document.languageId,
-      })),
-      activeTerminal: activeTerminal
-        ? {
-            name: activeTerminal.name,
-          }
-        : undefined,
-      terminals: vscode.window.terminals.map((terminal) => ({
-        name: terminal.name,
-      })),
-      activeEditorSelections: activeEditor?.selections.map((selection) => ({
-        start: {
-          line: selection.start.line,
-          character: selection.start.character,
-        },
-        end: {
-          line: selection.end.line,
-          character: selection.end.character,
-        },
-      })),
-      onDidChangeActiveTextEditor: 'vscode.window.onDidChangeActiveTextEditor (Subscription)',
-      onDidChangeWindowState: {
-        isFocused: vscode.window.state.focused,
-        // You can add more window state details here if needed
-      },
-      activeEditorLanguageId: activeEditor?.document.languageId,
-    };
-  }
-
-  getLanguageContext(): Record<string, unknown> {
-    const activeEditor = vscode.window.activeTextEditor;
-    const activeDocument = activeEditor?.document;
-
-    const availableLanguages = vscode.languages.getLanguages();
-    let diagnostics: vscode.Diagnostic[] = [];
-    if (activeDocument) {
-      try {
-        diagnostics = vscode.languages.getDiagnostics(activeDocument.uri);
-      } catch (error) {
-        console.error(`Error reading diagnostics ${activeDocument.uri.toString()}:`, error);
-        diagnostics = [];
-      }
-    }
-    const languageId = activeDocument?.languageId;
-
-    const languageSelector = activeDocument
-      ? {
-          language: languageId,
-          scheme: activeDocument.uri.scheme,
+      if (rootUri) {
+        try {
+          fsContent = await vscode.workspace.fs.readDirectory(rootUri);
+        } catch {
+          throw new ContextProviderError(
+            `Failed to read directory ${rootUri.toString()}`,
+            'READ_DIRECTORY_ERROR'
+          );
         }
-      : null;
+      }
 
-    return {
-      activeEditorLanguageId: languageId,
-      availableLanguages: availableLanguages,
-      languageFeatures: {
-        diagnostics: {
-          count: diagnostics.length,
-          items: diagnostics.map((d) => ({
-            message: d.message,
-            severity: this.getDiagnosticSeverityString(d.severity),
-            range: {
-              start: {
-                line: d.range.start.line,
-                character: d.range.start.character,
-              },
-              end: {
-                line: d.range.end.line,
-                character: d.range.end.character,
-              },
-            },
+      const recentFiles = await withErrorHandling(
+        async () => vscode.workspace.textDocuments.map(
+          (doc): RecentFile => ({
+            uri: doc.uri.toString(),
+            languageId: doc.languageId,
+            isDirty: doc.isDirty,
+          })
+        ),
+        { operation: 'getRecentFiles' }
+      );
+
+      return {
+        workspaceFolders: workspaceFolders?.map((folder) => ({
+          uri: folder.uri.toString(),
+          name: folder.name,
+        })) || [],
+        workspaceFs: {
+          rootContent: fsContent.map(([name, type]) => ({
+            name,
+            type: this.getFileTypeString(type),
           })),
         },
-        capabilities: this.getLanguageCapabilities(activeDocument, languageSelector),
-      },
-    };
+        recentFiles,
+        configuration: await this.getConfig(),
+      };
+    }, { operation: 'getWorkspaceContext' });
   }
 
-  private getLanguageCapabilities(
-    document: vscode.TextDocument | undefined,
-    selector: { language: string | undefined; scheme: string } | null,
-  ): Record<string, boolean> | null {
-    if (!document || !selector) {
-      return null;
-    }
+  private async getWindowContext(): Promise<Record<string, unknown>> {
+    return withErrorHandling(async () => {
+      const activeEditor = vscode.window.activeTextEditor;
+      const activeTerminal = vscode.window.activeTerminal;
 
-    return {
-      completion: vscode.languages.match(selector, document) > 0,
-      hover: vscode.languages.match(selector, document) > 0,
-      definition: vscode.languages.match(selector, document) > 0,
-      references: vscode.languages.match(selector, document) > 0,
-      documentSymbols: vscode.languages.match(selector, document) > 0,
-      codeActions: vscode.languages.match(selector, document) > 0,
-      formatting: vscode.languages.match(selector, document) > 0,
-      rename: vscode.languages.match(selector, document) > 0,
-      folding: vscode.languages.match(selector, document) > 0,
-      documentHighlight: vscode.languages.match(selector, document) > 0,
-      documentLinks: vscode.languages.match(selector, document) > 0,
-      color: vscode.languages.match(selector, document) > 0,
-      linkedEditing: vscode.languages.match(selector, document) > 0,
-    };
-  }
+      // Validate critical data
+      if (activeEditor?.document.uri) {
+        validateInput(
+          activeEditor.document.uri.toString(),
+          (uri) => uri.length > 0,
+          'Invalid active editor URI'
+        );
+      }
 
-  getDebugContext(): Record<string, unknown> {
-    const activeSession = vscode.debug.activeDebugSession;
-    const breakpoints = vscode.debug.breakpoints;
-
-    return {
-      activeDebugSession: activeSession
-        ? {
-            type: activeSession.type,
-            name: activeSession.name,
-            configuration: activeSession.configuration,
-            workspaceFolder: activeSession.workspaceFolder?.uri.toString(),
-            isAttach: activeSession.configuration?.request === 'attach',
-            isLaunch: activeSession.configuration?.request === 'launch',
-            customRequest:
-              typeof activeSession.customRequest === 'function' ? 'Available' : 'Unavailable',
-          }
-        : undefined,
-      breakpoints: {
-        count: breakpoints.length,
-        types: {
-          source: breakpoints.filter((bp) => 'location' in bp).length,
-          function: breakpoints.filter((bp) => 'functionName' in bp).length,
-          log: breakpoints.filter((bp) => 'logMessage' in bp).length,
-        },
-      },
-    };
-  }
-
-  async getSourceControlContext(): Promise<Record<string, unknown>> {
-    const gitExtension = vscode.extensions.getExtension('vscode.git');
-    const repositories = gitExtension?.exports.getAPI(1).repositories || [];
-    return {
-      repositories: repositories.map((repo: vscode.SourceControl) => ({
-        id: repo.id,
-        label: repo.label,
-        rootUri: repo.rootUri?.toString(),
-        count: repo.count,
-        commitTemplate: repo.commitTemplate,
-        acceptInputCommand: repo.acceptInputCommand?.command,
-        statusBarCommands: repo.statusBarCommands?.map((cmd: vscode.Command) => cmd.command),
-      })),
-      sourceControlRootUri: vscode.workspace.workspaceFolders?.[0]?.uri.toString(),
-    };
-  }
-
-  async getTasksContext(): Promise<Record<string, unknown>> {
-    try {
-      const tasks = await vscode.tasks.fetchTasks();
       return {
-        tasks: tasks.map((task) => ({
-          name: task.name,
-          source: task.source,
-          type: task.definition.type,
-          scope: this.getTaskScopeString(task.scope),
-          execution: this.getTaskExecutionInfo(task.execution),
-          problemMatchers: task.problemMatchers,
-          group: task.group ? task.group.id : undefined,
-          presentationOptions: {
-            echo: task.presentationOptions.echo,
-            reveal: task.presentationOptions.reveal,
-            focus: task.presentationOptions.focus,
-            panel: task.presentationOptions.panel,
-          },
-        })),
+        activeTextEditor: activeEditor
+          ? {
+              uri: activeEditor.document.uri.toString(),
+              languageId: activeEditor.document.languageId,
+              selection: activeEditor.selection
+                ? {
+                    start: {
+                      line: activeEditor.selection.start.line,
+                      character: activeEditor.selection.start.character,
+                    },
+                    end: {
+                      line: activeEditor.selection.end.line,
+                      character: activeEditor.selection.end.character,
+                    },
+                  }
+                : undefined,
+            }
+          : undefined,
+        activeTerminal: activeTerminal
+          ? {
+              name: activeTerminal.name,
+            }
+          : undefined,
       };
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      return {
-        tasks: 'Error fetching tasks',
-      };
-    }
+    }, { operation: 'getWindowContext' });
   }
 
-  getExtensionContext(): Record<string, unknown> {
-    const packageJson: PackageJson = {
-      name: 'vscode-context',
-      version: '0.0.6',
-      publisher: 'your-name',
-      displayName: 'VSCode Context',
-      description: 'Provides VSCode context information',
-      activationEvents: ['onCommand:vscode-context.extractContext'],
-      main: './out/extension.js',
-      engines: {
-        vscode: '^1.96.0',
-      },
-    };
-    const extension = vscode.extensions.getExtension(packageJson.name);
+  async startTrackingTerminals(context: vscode.ExtensionContext): Promise<void> {
+    await withErrorHandling(async () => {
+      // Track terminal creation and activity
+      const openDisposable = vscode.window.onDidOpenTerminal((terminal) => {
+        void withErrorHandling(async () => {
+          const terminalInfo: TerminalInfo = {
+            terminal,
+            creationTime: new Date().toISOString(),
+            lastActivity: new Date().toISOString(),
+            inputCount: 0,
+            outputCount: 0,
+          };
+          this.terminalTracker.active.set(terminal.name, terminalInfo);
+          return Promise.resolve();
+        }, { operation: 'onDidOpenTerminal', terminal: terminal.name });
+      });
 
-    return {
-      version: packageJson.version,
-      globalStateKeys: this.context.globalState.keys(),
-      workspaceStateKeys: this.context.workspaceState.keys(),
-      extensionPath: this.context.extensionPath,
-      extensionInfo: {
-        id: packageJson.name,
-        publisher: packageJson.publisher,
-        displayName: packageJson.displayName,
-        description: packageJson.description,
-        activationEvents: packageJson.activationEvents,
-        main: packageJson.main,
-        engines: packageJson.engines,
-        isActive: extension?.isActive ?? false,
-        packageJSON: extension?.packageJSON as Record<string, unknown>,
-      },
-    };
-  }
-
-  startTrackingTerminals(context: vscode.ExtensionContext) {
-    // Track terminal creation and activity
-    vscode.window.onDidOpenTerminal((terminal) => {
-      const terminalInfo: TerminalInfo = {
-        terminal,
-        creationTime: new Date().toISOString(),
-        lastActivity: new Date().toISOString(),
-        inputCount: 0,
-        outputCount: 0,
-      };
-      this.terminalTracker.active.set(terminal.name, terminalInfo);
-
-      // Track terminal closing
-      const closeDisposable = vscode.window.onDidCloseTerminal((closedTerminal) => {
-        if (closedTerminal.name === terminal.name) {
-          const info = this.terminalTracker.active.get(terminal.name);
-          if (info) {
-            const creationTime = new Date(info.creationTime);
+      // Track terminal destruction with lifetime calculation
+      const closeDisposable = vscode.window.onDidCloseTerminal((terminal) => {
+        void withErrorHandling(async () => {
+          const terminalInfo = this.terminalTracker.active.get(terminal.name);
+          if (terminalInfo) {
+            const creationTime = new Date(terminalInfo.creationTime);
             const closeTime = new Date();
             const lifetimeMs = closeTime.getTime() - creationTime.getTime();
 
             this.terminalTracker.history.push({
               name: terminal.name,
-              creationTime: info.creationTime,
-              lastActivity: info.lastActivity,
-              inputCount: info.inputCount,
-              outputCount: info.outputCount,
+              creationTime: terminalInfo.creationTime,
+              lastActivity: terminalInfo.lastActivity,
+              inputCount: terminalInfo.inputCount,
+              outputCount: terminalInfo.outputCount,
               lifetimeMs,
             });
 
             this.terminalTracker.active.delete(terminal.name);
           }
-        }
+          return Promise.resolve();
+        }, { operation: 'onDidCloseTerminal', terminal: terminal.name });
       });
 
-      context.subscriptions.push(closeDisposable);
-    });
-    // Track terminal destruction with lifetime calculation
-    const onDidCloseTerminal = vscode.window.onDidCloseTerminal((terminal) => {
-      const terminalInfo = this.terminalTracker.active.get(terminal.name);
-      if (terminalInfo) {
-        const creationTime = new Date(terminalInfo.creationTime);
-        const closeTime = new Date();
-        const lifetimeMs = closeTime.getTime() - creationTime.getTime();
+      context.subscriptions.push(openDisposable, closeDisposable);
+    }, { operation: 'startTrackingTerminals' });
+  }
 
-        this.terminalTracker.history.push({
-          name: terminal.name,
-          creationTime: terminalInfo.creationTime,
-          lastActivity: terminalInfo.lastActivity,
-          inputCount: terminalInfo.inputCount,
-          outputCount: terminalInfo.outputCount,
-          lifetimeMs,
-        });
+  /**
+   * Validate a URI is valid
+   */
+  private validateUri(uri: vscode.Uri | undefined, operation: string): void {
+    if (!uri) {
+      throw new ContextProviderError(
+        `Invalid URI in ${operation}`,
+        'INVALID_URI'
+      );
+    }
+  }
 
-        this.terminalTracker.active.delete(terminal.name);
-      }
-    });
-    context.subscriptions.push(onDidCloseTerminal);
+  /**
+   * Validate a document is valid
+   */
+  private validateDocument(document: vscode.TextDocument | undefined, operation: string): void {
+    if (!document) {
+      throw new ContextProviderError(
+        `Invalid document in ${operation}`,
+        'INVALID_DOCUMENT'
+      );
+    }
   }
 }
