@@ -1,5 +1,10 @@
 const scanner = require('sonarqube-scanner');
 
+if (!process.env.SONAR_TOKEN && !process.env.SONAR_PROJECT_KEY) {
+  console.error('Error: SONAR_TOKEN or SONAR_PROJECT_KEY environment variable is required');
+  process.exit(1);
+}
+
 scanner(
   {
     serverUrl: 'https://sonarcloud.io',
@@ -17,8 +22,16 @@ scanner(
       'sonar.javascript.lcov.reportPaths': 'coverage/lcov.info',
       'sonar.eslint.reportPaths': 'eslint-report.json',
       'sonar.typescript.tsconfigPath': './tsconfig.json',
-      'sonar.qualitygate.wait': true
+      'sonar.qualitygate.wait': true,
+      'sonar.verbose': 'true'
     },
   },
-  () => process.exit(),
+  (error) => {
+    if (error) {
+      console.error('SonarQube analysis failed:', error);
+      process.exit(1);
+    }
+    console.log('SonarQube analysis completed successfully');
+    process.exit(0);
+  }
 );
