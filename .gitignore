@@ -7,3 +7,8 @@ docs/functions
 *.json
 .aider*
 .aider.chat.history.md
+dist/
+coverage/
+.idea/
+.vscode/
+.DS_Store
