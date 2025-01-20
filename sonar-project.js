@@ -28,8 +28,8 @@ if (!process.env.SONAR_ORGANIZATION) {
 scanner(
   {
     serverUrl: 'https://sonarcloud.io',
-    token: token,
     options: {
+      'sonar.login': token,
       'sonar.organization': process.env.SONAR_ORGANIZATION || 'explicitcontextualunderstanding',
       'sonar.projectKey': 'vscode-context',
       'sonar.projectName': 'vscode-context',
