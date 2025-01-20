@@ -3,12 +3,21 @@ const scanner = require('sonarqube-scanner');
 scanner(
   {
     serverUrl: 'https://sonarcloud.io',
-    token: '${env:SONAR_PROJECT_KEY}', // Replace with your SonarCloud token
+    token: process.env.SONAR_TOKEN,
     options: {
-      'sonar.organization': 'explicitcontextualunderstanding', // Replace with your organization key
-      'sonar.projectKey': 'sonar.projectKey',   // Replace with your project key
-      'sonar.sources': './src',                // Adjust to your source code directory
-      'sonar.exclusions': '**/*.test.js',      // Optional: Exclude test files or other patterns
+      'sonar.organization': 'explicitcontextualunderstanding',
+      'sonar.projectKey': 'vscode-context',
+      'sonar.projectName': 'vscode-context',
+      'sonar.projectVersion': '0.0.7',
+      'sonar.sources': './src',
+      'sonar.tests': './src',
+      'sonar.sourceEncoding': 'UTF-8',
+      'sonar.exclusions': '**/*.test.js, **/*.d.ts',
+      'sonar.typescript.lcov.reportPaths': 'coverage/lcov.info',
+      'sonar.javascript.lcov.reportPaths': 'coverage/lcov.info',
+      'sonar.eslint.reportPaths': 'eslint-report.json',
+      'sonar.typescript.tsconfigPath': './tsconfig.json',
+      'sonar.qualitygate.wait': true
     },
   },
   () => process.exit(),
