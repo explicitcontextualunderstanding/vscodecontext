@@ -98,7 +98,7 @@ export class ContextProvider {
     history: [] as TerminalHistoryRecord[],
   };
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext) {
     // Add configuration monitoring
     vscode.workspace.onDidChangeConfiguration(() => {
       this.logger.log('Configuration changed');
@@ -317,17 +317,19 @@ export class ContextProvider {
       return { type: 'unknown' };
     }
 
-    const executionType = execution instanceof vscode.ProcessExecution
-      ? 'process'
-      : execution instanceof vscode.ShellExecution
-        ? 'shell'
-        : 'custom';
+    const executionType =
+      execution instanceof vscode.ProcessExecution
+        ? 'process'
+        : execution instanceof vscode.ShellExecution
+          ? 'shell'
+          : 'custom';
 
-    const executionCommand = execution instanceof vscode.ProcessExecution
-      ? execution.process
-      : execution instanceof vscode.ShellExecution
-        ? execution.commandLine
-        : 'custom';
+    const executionCommand =
+      execution instanceof vscode.ProcessExecution
+        ? execution.process
+        : execution instanceof vscode.ShellExecution
+          ? execution.commandLine
+          : 'custom';
 
     const baseInfo = {
       type: executionType,
