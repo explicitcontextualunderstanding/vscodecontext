@@ -1,192 +1,196 @@
 import * as vscode from 'vscode';
 import { ContextProvider } from './contextProvider';
+import { errorMonitor } from './monitoring/errorMonitor';
+import { handleError, withErrorHandling } from './utils/errorUtils';
 
 let contextProvider: ContextProvider;
+let outputChannel: vscode.OutputChannel;
 
-export function activate(context: Readonly<vscode.ExtensionContext>): void {
-  contextProvider = new ContextProvider(context);
-  contextProvider.logger.log('Congratulations, your extension "vscode-context" is now active!');
+// Global error handler for unhandled rejections
+process.on('unhandledRejection', (reason) => {
+  handleError(
+    reason instanceof Error ? reason : new Error(String(reason)),
+    { source: 'unhandledRejection' },
+    outputChannel
+  );
+});
 
-  // Event subscriptions
-  const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor((editor) => {
-    contextProvider.logger.log(`Active editor changed: ${editor?.document.uri.toString()}`);
-  });
-
-  const onDidChangeWindowState = vscode.window.onDidChangeWindowState((state) => {
-    contextProvider.logger.log(
-      `Window state changed: ${JSON.stringify({
-        focused: state.focused,
-        activeTerminal: vscode.window.activeTerminal?.name,
-      })}`,
+export async function activate(context: Readonly<vscode.ExtensionContext>): Promise<void> {
+  try {
+    outputChannel = vscode.window.createOutputChannel('VSCode Context');
+    
+    // Initialize context provider with error handling
+    await withErrorHandling(
+      async () => {
+        contextProvider = new ContextProvider(context);
+        contextProvider.logger.log('Extension "vscode-context" is now active!');
+      },
+      { operation: 'initializeContextProvider' },
+      outputChannel
     );
-  });
 
-  // Command registration
-  const extractContextCommand = vscode.commands.registerCommand(
-    'vscode-context.extractContext',
-    async () => {
-      const includeCategories = vscode.workspace
-        .getConfiguration('vscode-context')
-        .get('includeCategories', [
-          'workspace',
-          'window',
-          'language',
-          'debug',
-          'sourceControl',
-          'tasks',
-          'extension',
-          'extensionHost',
-          'settings',
-          'keybindings',
-          'theme',
-          'views',
-          'customEditors',
-        ]);
+    // Event subscriptions wrapped in error handling
+    const subscribeToEvent = (
+      eventName: string,
+      registration: () => vscode.Disposable
+    ): vscode.Disposable => {
       try {
-        const contextData = await contextProvider.getAllContext(includeCategories);
-        const outputChannel = vscode.window.createOutputChannel('VSCode Context');
-        outputChannel.clear();
-        outputChannel.appendLine('VSCode Context Data:');
-        outputChannel.appendLine(JSON.stringify(contextData, null, 2));
-        outputChannel.show(true);
+        return registration();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to extract context: ${error}`);
+        handleError(
+          error instanceof Error ? error : new Error(String(error)),
+          { operation: 'subscribeToEvent', event: eventName },
+          outputChannel
+        );
+        throw error;
       }
-    },
-  );
+    };
 
-  const executeSampleCommand = vscode.commands.registerCommand(
-    'vscode-context.executeSample',
-    async () => {
-      await vscode.commands.executeCommand('workbench.action.quickOpen');
-    },
-  );
-
-  const createTerminalCommand = vscode.commands.registerCommand(
-    'vscode-context.createTerminal',
-    () => {
-      const terminal = vscode.window.createTerminal('Cline Terminal');
-      terminal.show();
-      terminal.sendText('echo "Hello from Cline Terminal"');
-    },
-  );
-
-  // Add debug context monitoring
-  const onDidStartDebugSession = vscode.debug.onDidStartDebugSession((session) => {
-    contextProvider.logger.log(`Debug session started: ${session.name}`);
-  });
-
-  const onDidTerminateDebugSession = vscode.debug.onDidTerminateDebugSession((session) => {
-    contextProvider.logger.log(`Debug session terminated: ${session.name}`);
-  });
-
-  const onDidChangeBreakpoints = vscode.debug.onDidChangeBreakpoints((e) => {
-    contextProvider.logger.log(
-      `Breakpoints changed: added=${e.added}, removed=${e.removed}, changed=${e.changed}`,
+    // Editor events
+    const onDidChangeActiveTextEditor = subscribeToEvent(
+      'onDidChangeActiveTextEditor',
+      () => vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+        await withErrorHandling(
+          async () => {
+            contextProvider.logger.log(`Active editor changed: ${editor?.document.uri.toString()}`);
+          },
+          { operation: 'handleEditorChange', uri: editor?.document.uri.toString() },
+          outputChannel
+        );
+      })
     );
-  });
 
-  // Add window state tracking
-  const onDidChangeTextEditorSelection = vscode.window.onDidChangeTextEditorSelection(
-    (e: vscode.TextEditorSelectionChangeEvent) => {
-      contextProvider.logger.log(`Text editor selection changed: ${e.textEditor.document.uri}`);
-    },
-  );
-
-  const onDidChangeTextEditorVisibleRanges = vscode.window.onDidChangeTextEditorVisibleRanges(
-    (e: vscode.TextEditorVisibleRangesChangeEvent) => {
-      contextProvider.logger.log(
-        `Text editor visible ranges changed: ${e.textEditor.document.uri}`,
-      );
-    },
-  );
-
-  const onDidChangeTextEditorViewColumn = vscode.window.onDidChangeTextEditorViewColumn(
-    (e: vscode.TextEditorViewColumnChangeEvent) => {
-      contextProvider.logger.log(`Text editor view column changed: ${e.textEditor.document.uri}`);
-    },
-  );
-
-  // Add language feature monitoring
-  const onDidChangeDiagnostics = vscode.languages.onDidChangeDiagnostics(
-    (e: vscode.DiagnosticChangeEvent) => {
-      contextProvider.logger.log(
-        `Diagnostics changed: ${e.uris.map((uri: vscode.Uri) => uri.toString()).join(', ')}`,
-      );
-    },
-  );
-
-  // Add extension context usage
-  const onDidChangeExtensions = vscode.extensions.onDidChange(() => {
-    contextProvider.logger.log('Extensions changed');
-  });
-
-  // Add workspace file monitoring
-  const onDidCreateFiles = vscode.workspace.onDidCreateFiles((e: vscode.FileCreateEvent) => {
-    contextProvider.logger.log(
-      `Files created: ${e.files.map((f: vscode.Uri) => f.toString()).join(', ')}`,
+    const onDidChangeWindowState = subscribeToEvent(
+      'onDidChangeWindowState',
+      () => vscode.window.onDidChangeWindowState(async (state) => {
+        await withErrorHandling(
+          async () => {
+            contextProvider.logger.log(
+              `Window state changed: ${JSON.stringify({
+                focused: state.focused,
+                activeTerminal: vscode.window.activeTerminal?.name,
+              })}`
+            );
+          },
+          { operation: 'handleWindowStateChange' },
+          outputChannel
+        );
+      })
     );
-  });
 
-  const onDidDeleteFiles = vscode.workspace.onDidDeleteFiles((e: vscode.FileDeleteEvent) => {
-    contextProvider.logger.log(
-      `Files deleted: ${e.files.map((f: vscode.Uri) => f.toString()).join(', ')}`,
+    // Command registrations with error handling
+    const extractContextCommand = vscode.commands.registerCommand(
+      'vscode-context.extractContext',
+      async () => {
+        await withErrorHandling(async () => {
+          const config = vscode.workspace.getConfiguration('vscode-context');
+          const includeCategories = config.get('includeCategories', [
+            'workspace',
+            'window',
+            'language',
+            'debug',
+            'sourceControl',
+            'tasks',
+            'extension',
+            'extensionHost',
+            'settings',
+            'keybindings',
+            'theme',
+            'views',
+            'customEditors',
+          ]);
+
+          const contextData = await contextProvider.getAllContext(includeCategories);
+          outputChannel.clear();
+          outputChannel.appendLine('VSCode Context Data:');
+          outputChannel.appendLine(JSON.stringify(contextData, null, 2));
+          outputChannel.show(true);
+        }, { operation: 'extractContext' }, outputChannel);
+      }
     );
-  });
 
-  const onDidRenameFiles = vscode.workspace.onDidRenameFiles((e: vscode.FileRenameEvent) => {
-    const renameMessages = e.files.map((f) => `${f.oldUri} -> ${f.newUri}`);
-    contextProvider.logger.log(`Files renamed: ${renameMessages.join(', ')}`);
-  });
+    const executeSampleCommand = vscode.commands.registerCommand(
+      'vscode-context.executeSample',
+      async () => {
+        await withErrorHandling(
+          async () => vscode.commands.executeCommand('workbench.action.quickOpen'),
+          { operation: 'executeSample' },
+          outputChannel
+        );
+      }
+    );
 
-  // Add configuration monitoring
-  const onDidChangeConfiguration = vscode.workspace.onDidChangeConfiguration(() => {
-    contextProvider.logger.log('Configuration changed');
-  });
+    const createTerminalCommand = vscode.commands.registerCommand(
+      'vscode-context.createTerminal',
+      async () => {
+        await withErrorHandling(async () => {
+          const terminal = vscode.window.createTerminal('Cline Terminal');
+          terminal.show();
+          terminal.sendText('echo "Hello from Cline Terminal"');
+        }, { operation: 'createTerminal' }, outputChannel);
+      }
+    );
 
-  const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(
-    (e: vscode.TextDocumentChangeEvent) => {
-      contextProvider.logger.log(`Text document changed: ${e.document.uri}`);
-    },
-  );
+    // Debug events with error handling
+    const onDidStartDebugSession = subscribeToEvent(
+      'onDidStartDebugSession',
+      () => vscode.debug.onDidStartDebugSession(async (session) => {
+        await withErrorHandling(
+          async () => contextProvider.logger.log(`Debug session started: ${session.name}`),
+          { operation: 'handleDebugStart', session: session.name },
+          outputChannel
+        );
+      })
+    );
 
-  const onDidChangeWorkspaceFolders = vscode.workspace.onDidChangeWorkspaceFolders(
-    (e: vscode.WorkspaceFoldersChangeEvent) => {
-      contextProvider.logger.log(
-        `Workspace folders changed: added=${e.added.map((folder) => folder.uri.toString()).join(', ')}, removed=${e.removed.map((folder) => folder.uri.toString()).join(', ')}`,
-      );
-    },
-  );
+    const onDidTerminateDebugSession = subscribeToEvent(
+      'onDidTerminateDebugSession',
+      () => vscode.debug.onDidTerminateDebugSession(async (session) => {
+        await withErrorHandling(
+          async () => contextProvider.logger.log(`Debug session terminated: ${session.name}`),
+          { operation: 'handleDebugTerminate', session: session.name },
+          outputChannel
+        );
+      })
+    );
 
-  contextProvider.startTrackingTerminals(context);
+    // Start terminal tracking with error handling
+    await withErrorHandling(
+      async () => contextProvider.startTrackingTerminals(context),
+      { operation: 'startTrackingTerminals' },
+      outputChannel
+    );
 
-  context.subscriptions.push(
-    extractContextCommand,
-    executeSampleCommand,
-    createTerminalCommand,
-    onDidChangeActiveTextEditor,
-    onDidChangeWindowState,
-    onDidStartDebugSession,
-    onDidTerminateDebugSession,
-    onDidChangeBreakpoints,
-    onDidChangeTextEditorSelection,
-    onDidChangeTextEditorVisibleRanges,
-    onDidChangeTextEditorViewColumn,
-    onDidChangeDiagnostics,
-    onDidChangeExtensions,
-    onDidCreateFiles,
-    onDidDeleteFiles,
-    onDidRenameFiles,
-    onDidChangeConfiguration,
-    onDidChangeTextDocument,
-    onDidChangeWorkspaceFolders,
-  );
+    // Register all disposables
+    context.subscriptions.push(
+      outputChannel,
+      extractContextCommand,
+      executeSampleCommand,
+      createTerminalCommand,
+      onDidChangeActiveTextEditor,
+      onDidChangeWindowState,
+      onDidStartDebugSession,
+      onDidTerminateDebugSession
+      // Add remaining disposables...
+    );
+
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    errorMonitor.trackError(err, { phase: 'activation' });
+    handleError(err, { phase: 'activation' }, outputChannel);
+    throw err; // Re-throw to notify VSCode of activation failure
+  }
 }
 
-export function deactivate(): void {
-  if (contextProvider) {
-    contextProvider.logger.log('Extension "vscode-context" is being deactivated');
-    // Perform any necessary cleanup
-    contextProvider = null!;
-  }
+export async function deactivate(): Promise<void> {
+  await withErrorHandling(async () => {
+    if (contextProvider) {
+      contextProvider.logger.log('Extension "vscode-context" is being deactivated');
+      // Perform cleanup
+      contextProvider = null!;
+    }
+    if (outputChannel) {
+      outputChannel.dispose();
+    }
+  }, { operation: 'deactivate' }, outputChannel);
 }
