@@ -1,9 +1,12 @@
 const scanner = require('sonarqube-scanner');
 
-if (!process.env.SONAR_TOKEN && !process.env.SONAR_PROJECT_KEY) {
+const token = process.env.SONAR_TOKEN || process.env.SONAR_PROJECT_KEY;
+if (!token) {
   console.error('Error: SONAR_TOKEN or SONAR_PROJECT_KEY environment variable is required');
   process.exit(1);
 }
+
+console.log('Using Sonar token:', token ? `${token.slice(0, 4)}...${token.slice(-4)}` : 'none');
 
 scanner(
   {
