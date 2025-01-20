@@ -37,7 +37,7 @@
 export SONAR_TOKEN=your_token_here
 ```
 
-2. The project is already configured with SonarCloud settings in `sonar-project.js`:
+1. The project is already configured with SonarCloud settings in `sonar-project.js`:
    - Project Key: `explicitcontextualunderstanding_vscodecontext`
    - Organization: `explicitcontextualunderstanding`
    - Server URL: `https://sonarcloud.io`
