@@ -42,7 +42,7 @@ export function handleError(
 
   channel.appendLine(fullMessage);
   const stack: string | undefined = error.stack;
-  channel.appendLine(stack || 'No stack trace available');
+  channel.appendLine(stack ?? 'No stack trace available');
   errorMonitor.trackError(error, metadata);
   console.error(fullMessage, error.stack);
 }
