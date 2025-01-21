@@ -54,7 +54,9 @@ Control context collection through:
 
 3. **Environment Variables** (CI/CD):
 ```bash
+```bash
 CONTEXT_COLLECT_WORKSPACE=1 CONTEXT_COLLECT_DEBUG=0 npm run build
+```
 ```
 
 ## Contribution Workflow
