@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { IContextProvider, LogEntry } from './interfaces/IContextProvider';
 
 export class ContextProvider implements IContextProvider {
-  private context: vscode.ExtensionContext;
+  private readonly context: vscode.ExtensionContext;
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
