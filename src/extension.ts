@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ContextProvider } from './contextProvider';
 import { errorMonitor } from './monitoring/errorMonitor';
 import { handleError, withErrorHandling } from './utils/errorUtils';
+import { WebviewProvider } from './webview/WebviewProvider';
 
 let contextProvider: ContextProvider;
 let outputChannel: vscode.OutputChannel;
@@ -23,7 +24,7 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
     await withErrorHandling(
       async () => {
         contextProvider = new ContextProvider(context);
-        contextProvider.logger.log('Extension "vscode-context" is now active!');
+        contextProvider.logger.info('Extension activated');
       },
       { operation: 'initializeContextProvider' },
       outputChannel
@@ -52,7 +53,10 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       () => vscode.window.onDidChangeActiveTextEditor(async (editor) => {
         await withErrorHandling(
           async () => {
-            contextProvider.logger.log(`Active editor changed: ${editor?.document.uri.toString()}`);
+            contextProvider.logger.info(`Active editor changed: ${editor?.document.uri.toString()}`, {
+              uri: editor?.document.uri.toString(),
+              language: editor?.document.languageId
+            });
           },
           { operation: 'handleEditorChange', uri: editor?.document.uri.toString() },
           outputChannel
@@ -65,12 +69,10 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       () => vscode.window.onDidChangeWindowState(async (state) => {
         await withErrorHandling(
           async () => {
-            contextProvider.logger.log(
-              `Window state changed: ${JSON.stringify({
-                focused: state.focused,
-                activeTerminal: vscode.window.activeTerminal?.name,
-              })}`
-            );
+            contextProvider.logger.info('Window state changed', {
+              focused: state.focused,
+              activeTerminal: vscode.window.activeTerminal?.name
+            });
           },
           { operation: 'handleWindowStateChange' },
           outputChannel
@@ -136,7 +138,10 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       'onDidStartDebugSession',
       () => vscode.debug.onDidStartDebugSession(async (session) => {
         await withErrorHandling(
-          async () => contextProvider.logger.log(`Debug session started: ${session.name}`),
+          async () => contextProvider.logger.info(`Debug session started: ${session.name}`, {
+            type: session.type,
+            name: session.name
+          }),
           { operation: 'handleDebugStart', session: session.name },
           outputChannel
         );
@@ -147,7 +152,10 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       'onDidTerminateDebugSession',
       () => vscode.debug.onDidTerminateDebugSession(async (session) => {
         await withErrorHandling(
-          async () => contextProvider.logger.log(`Debug session terminated: ${session.name}`),
+          async () => contextProvider.logger.info(`Debug session terminated: ${session.name}`, {
+            type: session.type,
+            name: session.name
+          }),
           { operation: 'handleDebugTerminate', session: session.name },
           outputChannel
         );
@@ -161,6 +169,20 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       outputChannel
     );
 
+    // Register webview provider with error handling
+    const webviewProvider = await withErrorHandling(
+      async () => {
+        const provider = new WebviewProvider(context.extensionUri);
+        const registration = vscode.window.registerWebviewViewProvider(
+          'vscode-context.webview',
+          provider
+        );
+        return { provider, registration };
+      },
+      { operation: 'registerWebview' },
+      outputChannel
+    ) as { provider: WebviewProvider; registration: vscode.Disposable };
+
     // Register all disposables
     context.subscriptions.push(
       outputChannel,
@@ -170,7 +192,8 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       onDidChangeActiveTextEditor,
       onDidChangeWindowState,
       onDidStartDebugSession,
-      onDidTerminateDebugSession
+      onDidTerminateDebugSession,
+      webviewProvider.registration
       // Add remaining disposables...
     );
 
@@ -185,7 +208,9 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
 export async function deactivate(): Promise<void> {
   await withErrorHandling(async () => {
     if (contextProvider) {
-      contextProvider.logger.log('Extension "vscode-context" is being deactivated');
+      contextProvider.logger.info('Extension "vscode-context" is being deactivated', {
+        timestamp: new Date().toISOString()
+      });
       // Perform cleanup
       contextProvider = null!;
     }
