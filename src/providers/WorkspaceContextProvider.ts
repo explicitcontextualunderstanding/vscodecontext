@@ -15,19 +15,23 @@ export class WorkspaceContextProvider implements ContextDataProvider {
   }
 
   async getContext(): Promise<Record<string, unknown>> {
-    return withErrorHandling(() => ({
-      workspaceFolders: vscode.workspace.workspaceFolders?.map(folder => ({
-        name: folder.name,
-        uri: folder.uri.toString()
-      })),
-      configuration: {
-        settings: this.getWorkspaceSettings(),
-        extensions: this.getWorkspaceExtensions()
-      }
-    }), {
-      operation: 'getWorkspaceContext',
-      category: this.category
-    }, this.channel);
+    return withErrorHandling(
+      () => ({
+        workspaceFolders: vscode.workspace.workspaceFolders?.map((folder) => ({
+          name: folder.name,
+          uri: folder.uri.toString(),
+        })),
+        configuration: {
+          settings: this.getWorkspaceSettings(),
+          extensions: this.getWorkspaceExtensions(),
+        },
+      }),
+      {
+        operation: 'getWorkspaceContext',
+        category: this.category,
+      },
+      this.channel,
+    );
   }
 
   private getWorkspaceSettings(): {
@@ -38,7 +42,7 @@ export class WorkspaceContextProvider implements ContextDataProvider {
     return {
       editor: vscode.workspace.getConfiguration('editor'),
       files: vscode.workspace.getConfiguration('files'),
-      search: vscode.workspace.getConfiguration('search')
+      search: vscode.workspace.getConfiguration('search'),
     };
   }
 
@@ -46,9 +50,9 @@ export class WorkspaceContextProvider implements ContextDataProvider {
     id: string;
     packageJSON: unknown;
   }> {
-    return vscode.extensions.all.map(ext => ({
+    return vscode.extensions.all.map((ext) => ({
       id: ext.id,
-      packageJSON: ext.packageJSON as unknown
+      packageJSON: ext.packageJSON as unknown,
     }));
   }
 }

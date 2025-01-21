@@ -20,21 +20,25 @@ export class TerminalContextProvider implements ContextDataProvider {
   }
 
   async getContext(): Promise<Record<string, unknown>> {
-    return withErrorHandling(() => ({
-      activeTerminal: this.getActiveTerminalContext(),
-      allTerminals: this.terminals.map(terminal => this.getTerminalMetadata(terminal))
-    }), { 
-      operation: 'getTerminalContext',
-      category: this.category 
-    }, this.channel);
+    return withErrorHandling(
+      () => ({
+        activeTerminal: this.getActiveTerminalContext(),
+        allTerminals: this.terminals.map((terminal) => this.getTerminalMetadata(terminal)),
+      }),
+      {
+        operation: 'getTerminalContext',
+        category: this.category,
+      },
+      this.channel,
+    );
   }
 
-  private handleTerminalOpened = (terminal: vscode.Terminal): void => {
+  private readonly handleTerminalOpened = (terminal: vscode.Terminal): void => {
     this.terminals.push(terminal);
   };
 
-  private handleTerminalClosed = (terminal: vscode.Terminal): void => {
-    this.terminals = this.terminals.filter(t => t !== terminal);
+  private readonly handleTerminalClosed = (terminal: vscode.Terminal): void => {
+    this.terminals = this.terminals.filter((t) => t !== terminal);
   };
 
   private getActiveTerminalContext(): {
@@ -60,7 +64,7 @@ export class TerminalContextProvider implements ContextDataProvider {
       creationOptions: terminal.creationOptions,
       state: terminal.state,
       processId: terminal.processId !== undefined ? String(terminal.processId) : null, // eslint-disable-line @typescript-eslint/no-base-to-string
-      shellPath: this.getShellPath(terminal)
+      shellPath: this.getShellPath(terminal),
     };
   }
 
@@ -78,16 +82,17 @@ export class TerminalContextProvider implements ContextDataProvider {
         _shellPath?: { value: string };
         _ptyProcess?: { shellPath: string };
       }
-      
+
       /* @ts-expect-error - Accessing internal VS Code API */
       const internalTerm: VSCodeTerminalInternal = terminal;
-      
-      const shellPath = internalTerm._shellPath?.value ||
-                        internalTerm._ptyProcess?.shellPath;
+
+      const shellPath = internalTerm._shellPath?.value ?? internalTerm._ptyProcess?.shellPath;
 
       return typeof shellPath === 'string' ? shellPath : null;
     } catch (error) {
-      this.channel.appendLine(`Error getting shell path: ${error instanceof Error ? error.message : String(error)}`);
+      this.channel.appendLine(
+        `Error getting shell path: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return null;
     }
   }

@@ -16,7 +16,7 @@ export function hasInfoMethod(value: unknown): value is Logger {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
-  
+
   const potentialLogger = value as Partial<Logger>;
   return typeof potentialLogger.info === 'function';
 }
