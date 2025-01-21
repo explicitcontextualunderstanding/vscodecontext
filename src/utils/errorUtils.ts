@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 
 import { VSCodeContextError } from '../errors/VSCodeContextError';
+import type { ContextCategory } from '../interfaces/IContextProvider';
 import { errorMonitor } from '../monitoring/errorMonitor';
 
 export interface ErrorMetadata {
   operation: string;
+  category?: ContextCategory;
   context?: Record<string, unknown>;
   [key: string]: unknown;
 }
@@ -29,8 +31,12 @@ export function withErrorHandling<T>(
   }
 }
 
+function isErrorWithMessage(error: unknown): error is Error {
+  return error instanceof Error;
+}
+
 export function handleError(
-  error: Error,
+  error: unknown,
   metadata: ErrorMetadata,
   channel: vscode.OutputChannel,
 ): void {
@@ -38,13 +44,24 @@ export function handleError(
   const contextStr = metadata.context
     ? `\nContext: ${JSON.stringify(metadata.context, null, 2)}`
     : '';
-  const fullMessage = `[${timestamp}] ERROR in ${metadata.operation}: ${error.message}${contextStr}`;
+
+  let fullMessage = `[${timestamp}] ERROR in ${metadata.operation}: `;
+  let stack: string | undefined = 'No stack trace available';
+
+  // Convert to guaranteed Error instance upfront
+  const err = error instanceof Error ? error : new Error(String(error));
+  fullMessage += err.message;
+  stack = err.stack ?? 'No stack trace available';
 
   channel.appendLine(fullMessage);
-  const stack: string | undefined = error.stack;
   channel.appendLine(stack ?? 'No stack trace available');
-  errorMonitor.trackError(error, metadata);
-  console.error(fullMessage, error.stack);
+  if (contextStr) {
+    channel.appendLine(contextStr);
+  }
+  // Convert to Error instance if needed
+  const trackedError = isErrorWithMessage(error) ? error : new Error(String(error));
+  errorMonitor.trackError(trackedError, metadata);
+  console.error(fullMessage, stack);
 }
 
 /**
