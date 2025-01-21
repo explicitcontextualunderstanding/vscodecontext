@@ -4,8 +4,8 @@ import { withErrorHandling } from '../utils/errorUtils';
 
 export class WebviewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
-  private _extensionUri: vscode.Uri;
-  private _outputChannel: vscode.OutputChannel;
+  private readonly _extensionUri: vscode.Uri;
+  private readonly _outputChannel: vscode.OutputChannel;
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
@@ -26,7 +26,10 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage((message) => {
       void withErrorHandling(
         () => Promise.resolve(this.handleMessage(message)),
-        { operation: 'webviewOnDidReceiveMessage', context: { message: message } },
+        {
+          operation: 'webviewOnDidReceiveMessage',
+          context: { message: message },
+        },
         this._outputChannel,
       );
     });
