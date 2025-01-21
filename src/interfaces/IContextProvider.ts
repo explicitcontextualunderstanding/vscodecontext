@@ -4,7 +4,7 @@ export enum ContextCategory {
   Terminal = 'terminal',
   Environment = 'environment',
   Debug = 'debug',
-  SCM = 'scm'
+  SCM = 'scm',
 }
 
 export interface ContextDataProvider {

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import type { IExtensionContext } from './interfaces/IExtensionContext';
-import type { IContextProvider, LogEntry, ContextDataProvider } from './interfaces/IContextProvider';
+
+import type { ContextDataProvider, IContextProvider, LogEntry } from './interfaces/IContextProvider';
 
 export class ContextProvider implements IContextProvider {
   private readonly context: vscode.ExtensionContext;
