@@ -1,4 +1,12 @@
-interface Logger {
+/**
+ * Represents a logging interface with structured logging capabilities
+ */
+export interface Logger {
+  /**
+   * Logs an informational message with optional metadata
+   * @param message - The log message
+   * @param metadata - Optional structured data to include with the log
+   */
   info: (message: string, metadata?: object) => void;
 }
 
@@ -10,7 +18,9 @@ export function isError(value: unknown): value is Error {
 }
 
 /**
- * Type guard to check if a value has an 'info' method
+ * Type guard to check if a value implements the Logger interface
+ * @param value - The value to check
+ * @returns True if the value has a valid `info` method matching Logger interface
  */
 export function hasInfoMethod(value: unknown): value is Logger {
   if (typeof value !== 'object' || value === null) {
