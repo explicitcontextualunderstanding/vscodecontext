@@ -1,113 +1,72 @@
 import * as vscode from 'vscode';
+
 import { withErrorHandling } from '../utils/errorUtils';
-import { VSCodeContextError } from '../errors/VSCodeContextError';
-
-import { errorMonitor } from '../monitoring/errorMonitor';
-
-interface WebviewError {
-  message?: string;
-  stack?: string;
-  componentStack?: string;
-}
-
-interface WebviewMessage {
-  command: string;
-  text?: string;
-  error?: WebviewError;
-}
 
 export class WebviewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
-  private readonly _extensionUri: vscode.Uri;
+  private _extensionUri: vscode.Uri;
+  private _outputChannel: vscode.OutputChannel;
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
+    this._outputChannel = vscode.window.createOutputChannel('VSCode Context Webview');
   }
 
-  public resolveWebviewView(
-    webviewView: vscode.WebviewView,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _context: vscode.WebviewViewResolveContext<unknown>,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _token: vscode.CancellationToken,
-  ): void {
+  resolveWebviewView(webviewView: vscode.WebviewView): void {
     this._view = webviewView;
 
     webviewView.webview.options = {
+      // Allow scripts in the webview
       enableScripts: true,
       localResourceRoots: [this._extensionUri],
     };
 
-    webviewView.webview.html = this.getHtml(webviewView.webview);
+    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
-      await withErrorHandling(async () => this.handleMessage(message));
+    webviewView.webview.onDidReceiveMessage((message) => {
+      void withErrorHandling(
+        () => Promise.resolve(this.handleMessage(message)),
+        { operation: 'webviewOnDidReceiveMessage', context: { message: message } },
+        this._outputChannel,
+      );
     });
   }
 
-  private async handleMessage(message: WebviewMessage): Promise<void> {
-    if (!this._view) {
-      throw new VSCodeContextError('Webview not initialized', 'WEBVIEW_ERROR');
-    }
+  private _getHtmlForWebview(webview: vscode.Webview): string {
+    const scriptUri = webview
+      .asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src/webview/media', 'main.js'))
+      .toString();
 
-    try {
-      switch (message.command) {
-        case 'alert':
-          if (message.text) {
-            vscode.window.showErrorMessage(message.text);
-          }
-          return;
-        case 'error': {
-          // Track webview errors
-          const error = new VSCodeContextError(
-            message.error?.message ?? 'Unknown webview error',
-            'WEBVIEW_ERROR',
-          );
-          errorMonitor.trackError(error, {
-            stack: message.error?.stack,
-            componentStack: message.error?.componentStack,
-            source: 'webview',
-          });
-          return;
-        }
-        default:
-          throw new VSCodeContextError(`Unknown command: ${message.command}`, 'WEBVIEW_ERROR');
-      }
-    } catch (error) {
-      errorMonitor.trackError(error instanceof Error ? error : new Error(String(error)), {
-        source: 'webview',
-        command: message.command,
-      });
-      throw error;
-    }
-  }
-
-  private getHtml(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js'),
-    );
+    // Use a nonce to only allow a specific script to be run.
+    const nonce = getNonce();
 
     return `<!DOCTYPE html>
-      <html lang="en">
-      <head>
+    <html lang="en">
+    <head>
         <meta charset="UTF-8">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Webview</title>
-      </head>
-      <body>
-        <div id="root"></div>
-        <script src="${scriptUri}"></script>
-      </body>
-      </html>`;
+        <title>Cat Coding</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Context Data</h1>
+        </div>
+        <script nonce="${nonce}" src="${scriptUri}"></script>
+    </body>
+    </html>`;
+  }
+
+  public handleMessage(message: unknown): void {
+    console.log('message', message);
   }
 }
 
-export class WebviewErrorBoundary extends Error {
-  constructor(
-    message: string,
-    public componentStack: string,
-  ) {
-    super(message);
-    this.name = 'WebviewErrorBoundary';
+function getNonce(): string {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
+  return text;
 }
