@@ -268,11 +268,13 @@ All code should be documented using TypeDoc comments following these guidelines:
 ### Production Build
 
 1. Install dependencies and build:
+
 ```bash
 npm install && npm run build
 ```
 
-2. Package with source maps:
+1. Package with source maps:
+
 ```bash
 vsce package --yarn --testFlag=false
 ```

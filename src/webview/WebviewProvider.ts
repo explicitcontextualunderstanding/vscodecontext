@@ -69,9 +69,9 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
 
 function getNonce(): string {
   // Generate cryptographically secure random bytes (32 bytes = 256 bits)
-  const buffer = crypto.randomBytes(32);
-  // Convert to base64 and sanitize for CSP nonce requirements
-  return buffer.toString('base64')
-    .replace(/[+/]/g, '') // Remove non-alphanumeric characters
-    .slice(0, 32); // Truncate to 32 characters
+  const bytes = crypto.randomBytes(32);
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from(bytes)
+    .map((byte) => possible[byte % possible.length])
+    .join('');
 }
