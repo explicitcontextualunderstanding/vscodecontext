@@ -2,6 +2,7 @@
   "name": "vscode-context",
   "version": "0.0.7",
   "type": "commonjs",
+  "main": "./out/extension.cjs",
   "publisher": "your-name",
   "repository": {
     "type": "git",
@@ -29,6 +30,9 @@
     ]
   },
   "scripts": {
+    "compile": "tsc -p ./ && cp package.json out/package.json && sed -i '' 's/\"type\": \"module\"/\"type\": \"commonjs\"/' out/package.json",
+    "vscode:prepublish": "npm run compile",
+    "postinstall": "node ./node_modules/vscode/bin/install",
     "docs": "typedoc",
     "quality": "npm run lint && npm run format && npm run lint:markdown && npm run docs",
     "build": "npm run quality && webpack --mode production",
