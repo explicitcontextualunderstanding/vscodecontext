@@ -11,7 +11,7 @@
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "sourceMap": true,
-        "types": ["node", "@types/vscode"]
+        "types": ["node", "@types/vscode", "jest"]
     },
     "include": [
         "src/**/*.ts"
