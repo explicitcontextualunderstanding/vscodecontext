@@ -1,9 +1,19 @@
 import * as vscode from 'vscode';
 import { VSCodeContextError } from '../errors/VSCodeContextError';
 
-interface ErrorMetrics {
+/**
+ * Represents metrics collected about errors in the extension
+ *
+ * @property {number} count - Total number of occurrences of this error
+ * @property {Date} lastOccurrence - Timestamp of the most recent occurrence
+ * @property {Array<Record<string, unknown>>} contexts - Array of context objects captured with each occurrence (last 10 only)
+ */
+export interface ErrorMetrics {
+  /** Total number of occurrences of this error */
   count: number;
+  /** Timestamp of the most recent occurrence */
   lastOccurrence: Date;
+  /** Array of context objects captured with each occurrence (last 10 only) */
   contexts: Array<Record<string, unknown>>;
 }
 
