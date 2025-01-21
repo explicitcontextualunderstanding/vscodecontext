@@ -5,6 +5,7 @@ import { ContextProvider } from './contextProvider';
 import { errorMonitor } from './monitoring/errorMonitor';
 import { handleError, withErrorHandling } from './utils/errorUtils';
 import { WebviewProvider } from './webview/WebviewProvider';
+import { hasInfoMethod, toError } from './utils/typeGuards';
 
 let contextProvider: ContextProvider;
 let outputChannel: vscode.OutputChannel;
@@ -24,7 +25,7 @@ process.on('unhandledRejection', (reason) => {
 
 async function initializeContextProvider(context: vscode.ExtensionContext): Promise<void> {
   contextProvider = new ContextProvider(context);
-  contextProvider.logger.info('Extension activated');
+  contextProvider.info('Extension activated');
 }
 
 function subscribeToEvent(
@@ -47,7 +48,7 @@ function subscribeToEvent(
 async function handleEditorChange(editor: vscode.TextEditor | undefined): Promise<void> {
   await withErrorHandling(
     () => {
-      contextProvider.logger.info(`Active editor changed: ${editor?.document.uri.toString()}`, {
+      contextProvider.info(`Active editor changed: ${editor?.document.uri.toString()}`, {
         uri: editor?.document.uri.toString(),
         language: editor?.document.languageId
       });
@@ -62,7 +63,7 @@ async function handleWindowStateChange(state: vscode.WindowState): Promise<void>
     await withErrorHandling(
         () => {
         return Promise.resolve().then(() => {
-            contextProvider.logger.info('Window state changed', {
+            contextProvider.info('Window state changed', {
             focused: state.focused,
             activeTerminal: vscode.window.activeTerminal?.name
             });
@@ -119,7 +120,7 @@ async function createTerminal(): Promise<void> {
 
 async function handleDebugStart(session: vscode.DebugSession): Promise<void> {
     await withErrorHandling(
-        async () => contextProvider.logger.info(`Debug session started: ${session.name}`, {
+        async () => contextProvider.info(`Debug session started: ${session.name}`, {
           type: session.type,
           name: session.name
         }),
@@ -130,7 +131,7 @@ async function handleDebugStart(session: vscode.DebugSession): Promise<void> {
 
 async function handleDebugTerminate(session: vscode.DebugSession): Promise<void> {
     await withErrorHandling(
-      async () => contextProvider.logger.info(`Debug session terminated: ${session.name}`, {
+      async () => contextProvider.info(`Debug session terminated: ${session.name}`, {
         type: session.type,
         name: session.name
       }),
@@ -216,7 +217,7 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
 
 
     await withErrorHandling(
-      async () => contextProvider.startTrackingTerminals(context),
+      async () => contextProvider.startTrackingTerminals(),
       { operation: 'startTrackingTerminals' },
       outputChannel
     );
@@ -249,7 +250,7 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
 export async function deactivate(): Promise<void> {
   await withErrorHandling(async () => {
     if (contextProvider) {
-      contextProvider.logger.info('Extension "vscode-context" is being deactivated', {
+      contextProvider.info('Extension "vscode-context" is being deactivated', {
         timestamp: new Date().toISOString()
       });
       contextProvider = null!;
