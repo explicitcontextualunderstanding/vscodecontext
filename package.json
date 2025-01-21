@@ -37,8 +37,10 @@
     "lint:markdown": "markdownlint '**/*.md' --ignore 'node_modules/**' --ignore 'dist/**' --ignore 'out/**' --ignore 'coverage/**'",
     "format": "prettier --write src/**/*.ts",
     "prepare": "husky install",
+    "sonar-scan": "node sonar-project.js",
+    "prebuild": "npm run sonar-scan",
+    "postbuild": "npm run sonar-scan",
     "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
-    "postbuild": "npm run sonar",
     "test": "jest",
     "reinstall": "npm run build && code --uninstall-extension ./vscode-context-0.0.7.vsix && code --install-extension ./vscode-context-0.0.7.vsix"
   },
