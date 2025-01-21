@@ -1,44 +1,50 @@
 import * as vscode from 'vscode';
+
 import { VSCodeContextError } from '../errors/VSCodeContextError';
+import { errorMonitor } from '../monitoring/errorMonitor';
 
-/**
- * Log an error with context
- */
-export function logError(
-  error: Error,
-  context?: Record<string, unknown>,
-  channel?: vscode.OutputChannel,
-): void {
-  const timestamp = new Date().toISOString();
-  const errorMessage = `[${timestamp}] ${error.name}: ${error.message}`;
-  const contextStr = context ? `\nContext: ${JSON.stringify(context, null, 2)}` : '';
-  const stackTrace = error.stack ? `\nStack: ${error.stack}` : '';
-
-  const fullMessage = `${errorMessage}${contextStr}${stackTrace}\n`;
-
-  // Log to output channel if available
-  if (channel) {
-    channel.appendLine(fullMessage);
-  }
-
-  // Also log to console for development
-  console.error(fullMessage);
+export interface ErrorMetadata {
+  operation: string;
+  context?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
-/**
- * Central error handler
- */
+export function withErrorHandling<T>(
+  fn: () => T | Promise<T>,
+  metadata: ErrorMetadata,
+  channel: vscode.OutputChannel,
+): Promise<T> {
+  try {
+    const result = fn();
+    const promise = result instanceof Promise ? result : Promise.resolve(result);
+    return promise.catch((error: unknown) => {
+      const err = error instanceof Error ? error : new Error(String(error));
+      handleError(err, metadata, channel);
+      return Promise.reject(err);
+    });
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    handleError(err, metadata, channel);
+    return Promise.reject(err);
+  }
+}
+
 export function handleError(
   error: Error,
-  context?: Record<string, unknown>,
-  channel?: vscode.OutputChannel,
+  metadata: ErrorMetadata,
+  channel: vscode.OutputChannel,
 ): void {
-  // Log the error
-  logError(error, context, channel);
+  const timestamp = new Date().toISOString();
+  const contextStr = metadata.context
+    ? `\nContext: ${JSON.stringify(metadata.context, null, 2)}`
+    : '';
+  const fullMessage = `[${timestamp}] ERROR in ${metadata.operation}: ${error.message}${contextStr}`;
 
-  // Show error message to user based on error type
-  const userMessage = getUserFriendlyMessage(error);
-  vscode.window.showErrorMessage(userMessage);
+  channel.appendLine(fullMessage);
+  const stack: string | undefined = error.stack;
+  channel.appendLine(stack ?? 'No stack trace available');
+  errorMonitor.trackError(error, metadata);
+  console.error(fullMessage, error.stack);
 }
 
 /**
@@ -101,17 +107,21 @@ function getUserFriendlyMessage(error: Error): string {
 }
 
 /**
- * Wrap an async function with error handling
+ * Central error handler
  */
-export async function withErrorHandling<T>(
-  fn: () => Promise<T>,
+export function handleErrorWithUserMessage(
+  error: Error,
   context?: Record<string, unknown>,
   channel?: vscode.OutputChannel,
-): Promise<T> {
-  try {
-    return await fn();
-  } catch (error) {
-    handleError(error instanceof Error ? error : new Error(String(error)), context, channel);
-    throw error;
-  }
+): void {
+  // Log the error
+  handleError(
+    error,
+    { operation: 'handleErrorWithUserMessage', context },
+    channel || vscode.window.createOutputChannel('VSCode Context Error'),
+  );
+
+  // Show error message to user based on error type
+  const userMessage = getUserFriendlyMessage(error);
+  vscode.window.showErrorMessage(userMessage);
 }
