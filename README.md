@@ -263,7 +263,34 @@ All code should be documented using TypeDoc comments following these guidelines:
 - Use `@returns` for return values
 - Use `@example` for code examples
 
-### Building the Extension
+## Building the Extension
+
+### Production Build
+
+1. Install dependencies and build:
+```bash
+npm install && npm run build
+```
+
+2. Package with source maps:
+```bash
+vsce package --yarn --testFlag=false
+```
+
+### Development Build
+
+```bash
+npm run package:dev
+```
+
+### Build Configuration
+
+The extension uses CommonJS modules for VSCode compatibility. Key configuration details:
+
+- Webpack configuration uses CommonJS `require()` syntax
+- Output file is `extension.cjs`
+- ESLint is configured to allow CommonJS syntax in `webpack.config.js`
+- `package.json`'s `main` field points to `extension.cjs`
 
 #### Requirements
 
@@ -278,41 +305,6 @@ All code should be documented using TypeDoc comments following these guidelines:
   - Export a `deactivate` function (optional)
 - Must be packaged using `vsce` (Visual Studio Code Extensions)
 - Output files must be included in `.vscodeignore`
-
-#### Build Configuration
-
-The extension uses CommonJS modules for VSCode compatibility. When making changes to the build configuration:
-
-- Use CommonJS `require()` syntax in `webpack.config.js`
-- Ensure the output file is `extension.cjs`
-- Maintain ESLint configuration for CommonJS compatibility
-
-#### Build Commands
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/your-name/vscode-context.git
-cd vscode-context
-```
-
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-1. Run the development build:
-
-```bash
-npm run build
-```
-
-1. Package extension:
-
-```bash
-npx vsce package
-```
 
 ### Development Commands
 
