@@ -18,7 +18,7 @@ interface WebviewMessage {
 
 export class WebviewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
-  private _extensionUri: vscode.Uri;
+  private readonly _extensionUri: vscode.Uri;
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
@@ -60,7 +60,7 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
         case 'error': {
           // Track webview errors
           const error = new VSCodeContextError(
-            message.error?.message || 'Unknown webview error',
+            message.error?.message ?? 'Unknown webview error',
             'WEBVIEW_ERROR',
           );
           errorMonitor.trackError(error, {

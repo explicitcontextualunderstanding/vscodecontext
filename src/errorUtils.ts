@@ -1,14 +1,29 @@
 import { ContextProviderError } from './errors/VSCodeContextError';
 
-export function withErrorHandling<T>(
+/**
+ * Wraps an async function with proper error handling
+ * @param fn - The async function to execute
+ * @param metadata - Contextual information about the operation
+ * @returns The result of the async function
+ * @throws {ContextProviderError} When operation fails
+ */
+export async function withErrorHandling<T>(
   fn: () => Promise<T>,
   metadata: { operation: string }
 ): Promise<T> {
   try {
-    return fn();
-  } catch (error) {
+    return await fn();
+  } catch (error: unknown) {
+    const getErrorMessage = (err: unknown): string => {
+      if (err instanceof Error) return err.message;
+      if (typeof err === 'string') return err;
+      return 'Unknown error occurred';
+    };
+    
+    const message = getErrorMessage(error);
+        
     throw new ContextProviderError(
-      `Failed during ${metadata.operation}: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed during ${metadata.operation}: ${message}`,
       'OPERATION_FAILED',
       metadata.operation
     );

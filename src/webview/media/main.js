@@ -1,7 +1,11 @@
 /* global vscode, React, ReactDOM */
 /** @jsx React.createElement */
+import PropTypes from 'prop-types';
 
 class ErrorBoundary extends React.Component {
+  static propTypes = {
+    children: PropTypes.node.isRequired
+  };
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -11,7 +15,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) { // eslint-disable-line no-unused-vars
+  componentDidCatch(_error, errorInfo) { // eslint-disable-line no-unused-vars
     // Report error to extension (error parameter is used in postMessage)
     vscode.postMessage({
       command: 'error',

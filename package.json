@@ -17,10 +17,6 @@
     "node-cache": "^5.1.2",
     "winston": "^3.13.0"
   },
-  "main": "./out/extension.cjs",
-  "activationEvents": [
-    "onCommand:vscode-context.extractContext"
-  ],
   "contributes": {
     "commands": [
       {
@@ -44,7 +40,7 @@
     "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
     "postbuild": "npm run sonar",
     "test": "jest",
-    "reinstall": "npm run build && code --uninstall-extension rooveterinaryinc.vscode-context && code --install-extension ./vscode-context-0.0.7.vsix"
+    "reinstall": "npm run build && code --uninstall-extension ./vscode-context-0.0.7.vsix && code --install-extension ./vscode-context-0.0.7.vsix"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
