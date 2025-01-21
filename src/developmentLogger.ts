@@ -1,4 +1,5 @@
-import { Logger, LogLevel } from './loggingInterface';
+import type { Logger} from './loggingInterface';
+import { LogLevel } from './loggingInterface';
 
 export class DevelopmentLogger implements Logger {
   private context: Record<string, unknown> = {};

@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
 
 export interface LogEntry {
   message: string;
@@ -11,6 +11,6 @@ export interface IContextProvider {
     log: (entry: LogEntry) => void;
     info: (message: string, metadata?: object) => void;
   };
-  getAllContext: (categories: string[]) => Promise<object>;
+  getAllContext: (categories: string[]) => object;
   startTrackingTerminals: (context: vscode.ExtensionContext) => void;
 }

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { IContextProvider, LogEntry } from './interfaces/IContextProvider';
+
+import type { IContextProvider, LogEntry } from './interfaces/IContextProvider';
 
 export class ContextProvider implements IContextProvider {
   private readonly context: vscode.ExtensionContext;
@@ -7,16 +8,17 @@ export class ContextProvider implements IContextProvider {
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
   }
+
   public logger = {
-    log: (entry: LogEntry) => {
+    log: (entry: LogEntry): void => {
       console.log(`[${entry.level}] ${entry.message}`, entry.metadata);
     },
-    info: (message: string, metadata?: object) => {
+    info: (message: string, metadata?: object): void => {
       console.log(`[info] ${message}`, metadata);
     }
   };
 
-  async getAllContext(categories: string[]): Promise<object> {
+  getAllContext(categories: string[]): object {
     // Filter context based on requested categories
     return {
       workspace: categories.includes('workspace') ? {

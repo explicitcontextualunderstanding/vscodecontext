@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "target": "ES2020",
-        "module": "CommonJS",
+      "target": "ES2020",
+      "module": "ES2022",
         "outDir": "./out",
-        "rootDir": "./src",
+        "rootDir": ".",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
@@ -14,7 +14,9 @@
         "types": ["node", "@types/vscode", "jest"]
     },
     "include": [
-        "src/**/*.ts"
+      "src/**/*",
+      "**/*.config.*",
+      "eslint.config.mjs"
     ],
     "exclude": [
         "node_modules",
