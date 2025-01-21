@@ -310,15 +310,17 @@ The extension uses CommonJS modules for VSCode compatibility. Key configuration 
 
 ### Development Commands
 
-| Command               | Description                                                  |
-| --------------------- | ------------------------------------------------------------ |
-| `npm run build`       | Run quality checks and build production bundle               |
-| `npm run watch`       | Watch and rebuild on changes                                 |
-| `npm run quality`     | Run all quality checks (linting, formatting, docs)           |
-| `npm run lint`        | Run ESLint checks                                            |
-| `npm run format`      | Format code with Prettier                                    |
+| Command                 | Description                                                  |
+| ----------------------- | ------------------------------------------------------------ |
+| `npm run build`         | Run quality checks and build production bundle               |
+| `npm run watch`         | Watch and rebuild on changes                                 |
+| `npm run quality`       | Run all quality checks (linting, formatting, docs)           |
+| `npm run lint`          | Run ESLint checks                                            |
+| `npm run format`        | Format code with Prettier                                    |
 | `npm run lint:markdown` | Lint markdown files                                          |
-| `npm run docs`        | Generate API documentation                                   |
+| `npm run docs`          | Generate API documentation                                   |
+| `npm run package`       | Build production bundle and package extension                |
+| `npm run package:dev`   | Package development version (skips dependencies)             |
 
 ### Module System Configuration
 
