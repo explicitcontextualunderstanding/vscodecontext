@@ -43,7 +43,8 @@
     "prepare": "husky install",
     "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
     "postbuild": "npm run sonar",
-    "test": "jest"
+    "test": "jest",
+    "reinstall": "npm run build && code --uninstall-extension rooveterinaryinc.vscode-context && code --install-extension ./vscode-context-0.0.7.vsix"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
