@@ -12,6 +12,7 @@ We welcome contributions to this project! Please follow these guidelines when co
 - Git 2.35+
 
 Recommended System:
+
 - Unix-like shell (Bash/Zsh)
 - 8GB+ RAM for build process
 - VS Code Extension Development Kit
@@ -27,6 +28,7 @@ The extension uses a modern toolchain:
 4. **Prettier** - Automated code formatting
 
 Key npm Scripts:
+
 ```bash
 npm run build       # Full production build
 npm run watch       # Development mode with HMR
@@ -43,6 +45,7 @@ Control context collection through:
    - Toggle individual context collectors
 
 2. **settings.json**:
+
 ```json
 "vscode-context.collectors": {
   "workspace": true,
@@ -52,22 +55,23 @@ Control context collection through:
 }
 ```
 
-3. **Environment Variables** (CI/CD):
-```bash
+1. **Environment Variables** (CI/CD):
+
 ```bash
 CONTEXT_COLLECT_WORKSPACE=1 CONTEXT_COLLECT_DEBUG=0 npm run build
-```
 ```
 
 ## Contribution Workflow
 
 ### Getting Started
+
 1. Fork the repository
 2. Clone your fork locally
 3. Install dependencies: `npm install`
 4. Create a feature branch: `git checkout -b feat/your-feature`
 
 ### Making Changes
+
 - Follow existing code patterns in `src/` directory
 - Write atomic commits with conventional messages
 - Include unit tests for new features
@@ -75,6 +79,7 @@ CONTEXT_COLLECT_WORKSPACE=1 CONTEXT_COLLECT_DEBUG=0 npm run build
 - Verify against supported VS Code versions
 
 ### Submitting Changes
+
 1. Push to your fork: `git push origin your-branch`
 2. Create PR against `main` with:
    - Description of changes
