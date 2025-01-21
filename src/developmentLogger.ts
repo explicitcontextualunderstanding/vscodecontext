@@ -55,19 +55,19 @@ export class DevelopmentLogger implements Logger {
       // Structured logging
       switch (levelOrMessage) {
         case LogLevel.ERROR:
-          this.error(message || '', mergedMetadata);
+          this.error(message ?? '', mergedMetadata);
           break;
         case LogLevel.WARN:
-          this.warn(message || '', mergedMetadata);
+          this.warn(message ?? '', mergedMetadata);
           break;
         case LogLevel.INFO:
-          this.info(message || '', mergedMetadata);
+          this.info(message ?? '', mergedMetadata);
           break;
         case LogLevel.DEBUG:
-          this.debug(message || '', mergedMetadata);
+          this.debug(message ?? '', mergedMetadata);
           break;
         case LogLevel.VERBOSE:
-          this.verbose(message || '', mergedMetadata);
+          this.verbose(message ?? '', mergedMetadata);
           break;
       }
     }
