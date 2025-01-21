@@ -1,7 +1,6 @@
 /* global vscode, React, ReactDOM */
 /** @jsx React.createElement */
 import PropTypes from 'prop-types';
-
 class ErrorBoundary extends React.Component {
   static propTypes = {
     children: PropTypes.node.isRequired
@@ -11,18 +10,18 @@ class ErrorBoundary extends React.Component {
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
-  componentDidCatch(_error, errorInfo) { // eslint-disable-line no-unused-vars
-    // Report error to extension (error parameter is used in postMessage)
+  componentDidCatch(error, errorInfo) {
+    // Report error to extension
     vscode.postMessage({
       command: 'error',
       error: {
-        message: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack
+        message: error?.message || 'Unknown error',
+        stack: error?.stack || '',
+        componentStack: errorInfo?.componentStack ?? ''
       }
     });
   }
