@@ -51,7 +51,7 @@ export function handleError(
   // Convert to guaranteed Error instance upfront
   const err = error instanceof Error ? error : new Error(String(error));
   fullMessage += err.message;
-  stack = err.stack || 'No stack trace available';
+  stack = err.stack ?? 'No stack trace available';
 
   channel.appendLine(fullMessage);
   channel.appendLine(stack ?? 'No stack trace available');
