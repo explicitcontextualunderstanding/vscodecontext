@@ -41,7 +41,11 @@
     "prebuild": "npm run sonar-scan",
     "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
     "test": "jest",
-    "reinstall": "npm run build && code --uninstall-extension ./vscode-context-0.0.7.vsix && code --install-extension ./vscode-context-0.0.7.vsix"
+    "clean": "rimraf out coverage *.vsix",
+    "purge": "npm run clean && code --uninstall-extension ${npm_package_name} || exit 0",
+    "rebuild": "npm run clean && npm install && npm run build",
+    "reinstall": "vsce package && code --uninstall-extension ${npm_package_name} && code --install-extension ./${npm_package_name}-${npm_package_version}.vsix",
+    "refresh": "npm run purge && npm run rebuild && npm run reinstall"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
@@ -59,6 +63,7 @@
     "jest": "^29.7.0",
     "markdownlint-cli": "^0.43.0",
     "prettier": "^3.0.0",
+    "rimraf": "^5.0.5",
     "sonarqube-scanner": "^2.8.0",
     "ts-jest": "^29.1.2",
     "ts-loader": "^9.5.2",
