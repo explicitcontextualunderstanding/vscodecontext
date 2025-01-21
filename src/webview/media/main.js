@@ -54,11 +54,9 @@ root.render(<App />);
 // Handle messages from extension
 window.addEventListener('message', event => {
   const message = event.data;
-  switch (message.command) {
-    case 'error':
-      console.error('Error from extension:', message.error);
-      break;
-    default:
-      console.warn('Unknown message:', message);
+  if (message.command === 'error') {
+    console.error('Error from extension:', message.error);
+  } else {
+    console.warn('Unknown message:', message);
   }
 });
