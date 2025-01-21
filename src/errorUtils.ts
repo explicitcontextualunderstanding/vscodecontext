@@ -1,4 +1,5 @@
 import { ContextProviderError } from './errors/VSCodeContextError';
+import { isError, isObjectWithMessage } from './utils/typeGuards';
 
 /**
  * Wraps an async function with proper error handling
@@ -15,8 +16,9 @@ export async function withErrorHandling<T>(
     return await fn();
   } catch (error: unknown) {
     const getErrorMessage = (err: unknown): string => {
-      if (err instanceof Error) return err.message;
+      if (isError(err)) return err.message;
       if (typeof err === 'string') return err;
+      if (isObjectWithMessage(err)) return err.message;
       return 'Unknown error occurred';
     };
     

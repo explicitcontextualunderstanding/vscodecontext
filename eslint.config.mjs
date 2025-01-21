@@ -10,12 +10,24 @@ export default [
   },
   // TypeScript Recommended Configuration
   ...tseslint.configs.recommendedTypeChecked,
-   // TypeScript Specific Configuration
+  // TypeScript Specific Configuration
   {
     files: ["**/*.ts"],
     ignores: ["**/dist/*", "**/coverage/*", "**/*.cjs"],
     plugins: {
       import: (await import("eslint-plugin-import")).default,
+    },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-argument": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-call": "error",
+      "@typescript-eslint/no-unsafe-member-access": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/explicit-function-return-type": "warn",
+      "@typescript-eslint/consistent-type-imports": "warn"
     },
     languageOptions: {
       globals: {
