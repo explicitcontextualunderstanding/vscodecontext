@@ -5,7 +5,6 @@ import { ContextProvider } from './contextProvider';
 import { errorMonitor } from './monitoring/errorMonitor';
 import { handleError, withErrorHandling } from './utils/errorUtils';
 import { WebviewProvider } from './webview/WebviewProvider';
-import { hasInfoMethod, toError } from './utils/typeGuards';
 
 let contextProvider: ContextProvider;
 let outputChannel: vscode.OutputChannel;
