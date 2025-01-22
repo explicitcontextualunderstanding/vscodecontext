@@ -25,7 +25,7 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage((message) => {
+    webviewView.webview.onDidReceiveMessage((message: unknown) => {
       void withErrorHandling(
         () => Promise.resolve(this.handleMessage(message)),
         {
@@ -63,7 +63,7 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
   }
 
   public handleMessage(message: unknown): void {
-    console.log('message', message);
+    this._outputChannel.appendLine(`Received webview message: ${JSON.stringify(message)}`);
   }
 }
 

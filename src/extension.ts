@@ -16,9 +16,9 @@ process.on('unhandledRejection', (reason) => {
     err,
     {
       operation: 'unhandledRejectionHandler',
-      source: 'process'
+      source: 'process',
     },
-    outputChannel
+    outputChannel,
   );
 });
 
@@ -29,17 +29,13 @@ async function initializeContextProvider(context: vscode.ExtensionContext): Prom
 
 function subscribeToEvent(
   eventName: string,
-  registration: () => vscode.Disposable
+  registration: () => vscode.Disposable,
 ): vscode.Disposable {
   try {
     return registration();
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    handleError(
-        err,
-        { operation: 'subscribeToEvent', event: eventName },
-        outputChannel
-    );
+    handleError(err, { operation: 'subscribeToEvent', event: eventName }, outputChannel);
     throw err;
   }
 }
@@ -49,109 +45,120 @@ async function handleEditorChange(editor: vscode.TextEditor | undefined): Promis
     () => {
       contextProvider.info(`Active editor changed: ${editor?.document.uri.toString()}`, {
         uri: editor?.document.uri.toString(),
-        language: editor?.document.languageId
+        language: editor?.document.languageId,
       });
       return Promise.resolve();
     },
     { operation: 'handleEditorChange', uri: editor?.document.uri.toString() },
-    outputChannel
+    outputChannel,
   );
 }
 
 async function handleWindowStateChange(state: vscode.WindowState): Promise<void> {
-    await withErrorHandling(
-        () => {
-        return Promise.resolve().then(() => {
-            contextProvider.info('Window state changed', {
-            focused: state.focused,
-            activeTerminal: vscode.window.activeTerminal?.name
-            });
+  await withErrorHandling(
+    () => {
+      return Promise.resolve().then(() => {
+        contextProvider.info('Window state changed', {
+          focused: state.focused,
+          activeTerminal: vscode.window.activeTerminal?.name,
         });
-        },
-        { operation: 'handleWindowStateChange' },
-        outputChannel
-    );
+      });
+    },
+    { operation: 'handleWindowStateChange' },
+    outputChannel,
+  );
 }
 
-
 async function extractContext(): Promise<void> {
-  await withErrorHandling(() => {
-    const config = vscode.workspace.getConfiguration('vscode-context');
-    const includeCategories = config.get('includeCategories', [
-      'workspace',
-      'window',
-      'language',
-      'debug',
-      'sourceControl',
-      'tasks',
-      'extension',
-      'extensionHost',
-      'settings',
-      'keybindings',
-      'theme',
-      'views',
-      'customEditors',
-    ]);
+  await withErrorHandling(
+    () => {
+      const config = vscode.workspace.getConfiguration('vscode-context');
+      const includeCategories = config.get('includeCategories', [
+        'workspace',
+        'window',
+        'language',
+        'debug',
+        'sourceControl',
+        'tasks',
+        'extension',
+        'extensionHost',
+        'settings',
+        'keybindings',
+        'theme',
+        'views',
+        'customEditors',
+      ]);
 
-    const contextData = contextProvider.getAllContext(includeCategories);
-    outputChannel.clear();
-    outputChannel.appendLine('VSCode Context Data:');
-    outputChannel.appendLine(JSON.stringify(contextData, null, 2));
-    outputChannel.show(true);
-  }, { operation: 'extractContext' }, outputChannel);
+      const contextData = contextProvider.getAllContext(includeCategories);
+      outputChannel.clear();
+      outputChannel.appendLine('VSCode Context Data:');
+      outputChannel.appendLine(JSON.stringify(contextData, null, 2));
+      outputChannel.show(true);
+    },
+    { operation: 'extractContext' },
+    outputChannel,
+  );
 }
 
 async function executeSampleCommand(): Promise<void> {
-    await withErrorHandling(
-      async () => vscode.commands.executeCommand('workbench.action.quickOpen'),
-      { operation: 'executeSample' },
-      outputChannel
-    );
-  }
+  await withErrorHandling(
+    async () => vscode.commands.executeCommand('workbench.action.quickOpen'),
+    { operation: 'executeSample' },
+    outputChannel,
+  );
+}
 
 async function createTerminal(): Promise<void> {
-  await withErrorHandling(async () => {
-    const terminal = vscode.window.createTerminal('Cline Terminal');
-    terminal.show();
-    terminal.sendText('echo "Hello from Cline Terminal"');
-  }, { operation: 'createTerminal' }, outputChannel);
+  await withErrorHandling(
+    async () => {
+      const terminal = vscode.window.createTerminal('Cline Terminal');
+      terminal.show();
+      terminal.sendText('echo "Hello from Cline Terminal"');
+    },
+    { operation: 'createTerminal' },
+    outputChannel,
+  );
 }
 
 async function handleDebugStart(session: vscode.DebugSession): Promise<void> {
-    await withErrorHandling(
-        async () => contextProvider.info(`Debug session started: ${session.name}`, {
-          type: session.type,
-          name: session.name
-        }),
-        { operation: 'handleDebugStart', session: session.name },
-        outputChannel
-      );
+  await withErrorHandling(
+    async () =>
+      contextProvider.info(`Debug session started: ${session.name}`, {
+        type: session.type,
+        name: session.name,
+      }),
+    { operation: 'handleDebugStart', session: session.name },
+    outputChannel,
+  );
 }
 
 async function handleDebugTerminate(session: vscode.DebugSession): Promise<void> {
-    await withErrorHandling(
-      async () => contextProvider.info(`Debug session terminated: ${session.name}`, {
+  await withErrorHandling(
+    async () =>
+      contextProvider.info(`Debug session terminated: ${session.name}`, {
         type: session.type,
-        name: session.name
+        name: session.name,
       }),
-      { operation: 'handleDebugTerminate', session: session.name },
-      outputChannel
-    );
+    { operation: 'handleDebugTerminate', session: session.name },
+    outputChannel,
+  );
 }
 
-async function registerWebview(context: vscode.ExtensionContext): Promise<{ provider: WebviewProvider; registration: vscode.Disposable }> {
-    return await withErrorHandling(
-        async () => {
-            const provider = new WebviewProvider(context.extensionUri);
-            const registration = vscode.window.registerWebviewViewProvider(
-            'vscode-context.webview',
-            provider
-            );
-            return { provider, registration };
-        },
-        { operation: 'registerWebview' },
-        outputChannel
-    ) as { provider: WebviewProvider; registration: vscode.Disposable };
+async function registerWebview(
+  context: vscode.ExtensionContext,
+): Promise<{ provider: WebviewProvider; registration: vscode.Disposable }> {
+  return (await withErrorHandling(
+    async () => {
+      const provider = new WebviewProvider(context.extensionUri);
+      const registration = vscode.window.registerWebviewViewProvider(
+        'vscode-context.webview',
+        provider,
+      );
+      return { provider, registration };
+    },
+    { operation: 'registerWebview' },
+    outputChannel,
+  )) as { provider: WebviewProvider; registration: vscode.Disposable };
 }
 
 export async function activate(context: Readonly<vscode.ExtensionContext>): Promise<void> {
@@ -159,66 +166,60 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
     outputChannel = vscode.window.createOutputChannel('VSCode Context');
 
     await withErrorHandling(
-        () => initializeContextProvider(context),
-        { operation: 'initializeContextProvider' },
-        outputChannel
+      () => initializeContextProvider(context),
+      { operation: 'initializeContextProvider' },
+      outputChannel,
     );
 
-
-    const onDidChangeActiveTextEditor = subscribeToEvent(
-      'onDidChangeActiveTextEditor',
-      () => vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+    const onDidChangeActiveTextEditor = subscribeToEvent('onDidChangeActiveTextEditor', () =>
+      vscode.window.onDidChangeActiveTextEditor(async (editor) => {
         await handleEditorChange(editor);
-      })
+      }),
     );
 
-    const onDidChangeWindowState = subscribeToEvent(
-      'onDidChangeWindowState',
-      () => vscode.window.onDidChangeWindowState((state) => {
-          void handleWindowStateChange(state);
-      })
+    const onDidChangeWindowState = subscribeToEvent('onDidChangeWindowState', () =>
+      vscode.window.onDidChangeWindowState((state) => {
+        void handleWindowStateChange(state);
+      }),
     );
 
     const extractContextCommand = vscode.commands.registerCommand(
       'vscode-context.extractContext',
       async () => {
         await extractContext();
-      }
+      },
     );
 
     const executeSampleCommandRegistration = vscode.commands.registerCommand(
       'vscode-context.executeSample',
       async () => {
         await executeSampleCommand();
-      }
+      },
     );
 
     const createTerminalCommand = vscode.commands.registerCommand(
       'vscode-context.createTerminal',
       async () => {
         await createTerminal();
-      }
+      },
     );
 
-    const onDidStartDebugSession = subscribeToEvent(
-      'onDidStartDebugSession',
-      () => vscode.debug.onDidStartDebugSession(async (session) => {
-          await handleDebugStart(session);
-      })
+    const onDidStartDebugSession = subscribeToEvent('onDidStartDebugSession', () =>
+      vscode.debug.onDidStartDebugSession(async (session) => {
+        await handleDebugStart(session);
+      }),
     );
 
-    const onDidTerminateDebugSession = subscribeToEvent(
-      'onDidTerminateDebugSession',
-      () => vscode.debug.onDidTerminateDebugSession(async (session) => {
+    const onDidTerminateDebugSession = subscribeToEvent('onDidTerminateDebugSession', () =>
+      vscode.debug.onDidTerminateDebugSession(async (session) => {
         await handleDebugTerminate(session);
-      })
+      }),
     );
-
 
     await withErrorHandling(
       async () => contextProvider.startTrackingTerminals(),
       { operation: 'startTrackingTerminals' },
-      outputChannel
+      outputChannel,
     );
 
     const webviewProvider = await registerWebview(context);
@@ -232,30 +233,37 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       onDidChangeWindowState,
       onDidStartDebugSession,
       onDidTerminateDebugSession,
-      webviewProvider.registration
+      webviewProvider.registration,
     );
-
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     errorMonitor.trackError(err, { phase: 'activation' });
-    handleError(err, {
-      operation: 'extensionActivation',
-      phase: 'activation'
-    }, outputChannel);
+    handleError(
+      err,
+      {
+        operation: 'extensionActivation',
+        phase: 'activation',
+      },
+      outputChannel,
+    );
     throw err;
   }
 }
 
 export async function deactivate(): Promise<void> {
-  await withErrorHandling(async () => {
-    if (contextProvider) {
-      contextProvider.info('Extension "vscode-context" is being deactivated', {
-        timestamp: new Date().toISOString()
-      });
-      contextProvider = null!;
-    }
-    if (outputChannel) {
-      outputChannel.dispose();
-    }
-  }, { operation: 'deactivate' }, outputChannel);
+  await withErrorHandling(
+    async () => {
+      if (contextProvider) {
+        contextProvider.info('Extension "vscode-context" is being deactivated', {
+          timestamp: new Date().toISOString(),
+        });
+        contextProvider = null!;
+      }
+      if (outputChannel) {
+        outputChannel.dispose();
+      }
+    },
+    { operation: 'deactivate' },
+    outputChannel,
+  );
 }

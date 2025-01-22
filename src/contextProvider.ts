@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
 
-import type { ContextDataProvider, IContextProvider, LogEntry } from './interfaces/IContextProvider';
+import type {
+  ContextDataProvider,
+  IContextProvider,
+  LogEntry,
+} from './interfaces/IContextProvider';
 
 export class ContextProvider implements IContextProvider {
   private readonly context: vscode.ExtensionContext;
-  private providers: ContextDataProvider[] = [];
-  private logEntries: LogEntry[] = [];
+  private readonly providers: ContextDataProvider[] = [];
+  private readonly logEntries: LogEntry[] = [];
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -16,7 +20,7 @@ export class ContextProvider implements IContextProvider {
       timestamp: new Date(),
       level: 'info',
       message,
-      context: metadata
+      context: metadata,
     });
   }
 
@@ -25,7 +29,7 @@ export class ContextProvider implements IContextProvider {
       timestamp: new Date(),
       level: 'warn',
       message,
-      context: metadata
+      context: metadata,
     });
   }
 
@@ -34,7 +38,7 @@ export class ContextProvider implements IContextProvider {
       timestamp: new Date(),
       level: 'error',
       message,
-      context: metadata
+      context: metadata,
     });
   }
 
@@ -50,12 +54,7 @@ export class ContextProvider implements IContextProvider {
     this.logEntries.push(entry);
     // Preserve existing logging behavior
     if (typeof entry !== 'object' || entry === null) return;
-    const safeEntry = entry as {
-      level?: string;
-      message?: string;
-      metadata?: unknown;
-    };
-    console.log(`[${safeEntry.level}] ${safeEntry.message}`, safeEntry.metadata);
+    // Logging handled through class methods
   }
 
   getLogHistory(): LogEntry[] {
@@ -64,24 +63,30 @@ export class ContextProvider implements IContextProvider {
 
   async getAllContext(categories: string[]): Promise<Record<string, unknown>> {
     return Promise.resolve({
-      workspace: categories.includes('workspace') ? {
-        name: vscode.workspace.name,
-        folders: vscode.workspace.workspaceFolders?.map(f => f.uri.fsPath) || []
-      } : {},
-      editor: categories.includes('editor') ? {
-        activeDocument: vscode.window.activeTextEditor?.document.fileName,
-        language: vscode.window.activeTextEditor?.document.languageId
-      } : {},
-      environment: categories.includes('environment') ? {
-        vscodeVersion: vscode.version,
-        os: process.platform
-      } : {}
+      workspace: categories.includes('workspace')
+        ? {
+            name: vscode.workspace.name,
+            folders: vscode.workspace.workspaceFolders?.map((f) => f.uri.fsPath) || [],
+          }
+        : {},
+      editor: categories.includes('editor')
+        ? {
+            activeDocument: vscode.window.activeTextEditor?.document.fileName,
+            language: vscode.window.activeTextEditor?.document.languageId,
+          }
+        : {},
+      environment: categories.includes('environment')
+        ? {
+            vscodeVersion: vscode.version,
+            os: process.platform,
+          }
+        : {},
     });
   }
 
   startTrackingTerminals(): void {
     const disposable = vscode.window.onDidChangeTerminalState(() => {
-      console.log('Terminal state changed');
+      this.info('Terminal state changed');
     });
     this.context.subscriptions.push(disposable);
   }
