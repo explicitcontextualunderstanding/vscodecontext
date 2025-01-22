@@ -1,4 +1,4 @@
-import type { Logger} from './loggingInterface';
+import type { Logger } from './loggingInterface';
 import { LogLevel } from './loggingInterface';
 
 export class DevelopmentLogger implements Logger {
@@ -25,29 +25,40 @@ export class DevelopmentLogger implements Logger {
     return { ...this.context };
   }
 
+  private _writeLog(level: string, message: string, metadata?: Record<string, unknown>): void {
+    const output = `[${level}] ${message} ${JSON.stringify(metadata || {})}\n`;
+    process.stdout.write(output);
+  }
+
   verbose(message: string, metadata?: Record<string, unknown>): void {
     const mergedMetadata = { ...this.context, ...(metadata || {}) };
-    console.debug('[VERBOSE]', message, mergedMetadata);
+    this._writeLog('VERBOSE', message, mergedMetadata);
   }
+
   debug(message: string, metadata?: Record<string, unknown>): void {
-    console.debug('[DEBUG]', message, metadata);
+    this._writeLog('DEBUG', message, metadata);
   }
 
   info(message: string, metadata?: Record<string, unknown>): void {
-    console.info('[INFO]', message, metadata);
+    this._writeLog('INFO', message, metadata);
   }
 
   warn(message: string, metadata?: Record<string, unknown>): void {
-    console.warn('[WARN]', message, metadata);
+    this._writeLog('WARN', message, metadata);
   }
 
   error(error: Error | string, metadata?: Record<string, unknown>): void {
-    console.error('[ERROR]', error, metadata);
+    const errorMessage = error instanceof Error ? error.message : error;
+    this._writeLog('ERROR', errorMessage, metadata);
   }
 
-  log(levelOrMessage: LogLevel | string, message?: string, metadata?: Record<string, unknown>): void {
+  log(
+    levelOrMessage: LogLevel | string,
+    message?: string,
+    metadata?: Record<string, unknown>,
+  ): void {
     const mergedMetadata = { ...this.context, ...(metadata || {}) };
-    
+
     if (typeof levelOrMessage === 'string') {
       // Backward compatibility
       this.info(levelOrMessage, mergedMetadata);

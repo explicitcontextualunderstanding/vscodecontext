@@ -1,112 +1,101 @@
-import globals from "globals";
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+import eslint from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import prettierPlugin from 'eslint-plugin-prettier';
 
 export default [
-  // JavaScript Configuration
+  // Base configuration
   {
-    files: ["**/*.js"],
-    ...js.configs.recommended,
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/docs/**',
+      '**/*.d.ts',
+      '**/*.min.js',
+      '**/*.html',
+      'out/**',
+    ],
   },
-  // TypeScript Recommended Configuration
-  ...tseslint.configs.recommendedTypeChecked,
-  // TypeScript Specific Configuration
+
+  // Core ESLint recommended rules with environments
   {
-    files: ["**/*.ts"],
-    ignores: ["**/dist/*", "**/coverage/*", "**/*.cjs"],
-    plugins: {
-      import: (await import("eslint-plugin-import")).default,
-    },
-    rules: {
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unsafe-argument": "error",
-      "@typescript-eslint/no-unsafe-assignment": "error",
-      "@typescript-eslint/no-unsafe-call": "error",
-      "@typescript-eslint/no-unsafe-member-access": "error",
-      "@typescript-eslint/no-unsafe-return": "error",
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/explicit-function-return-type": "warn",
-      "@typescript-eslint/consistent-type-imports": "warn"
-    },
+    ...eslint.configs.recommended,
     languageOptions: {
       globals: {
-        ...globals.node,
-        process: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
+        console: 'readonly',
+        process: 'readonly',
+        setTimeout: 'readonly',
       },
-      parserOptions: {
-        project: true,
-        sourceType: "module",
-      },
-    },
-    rules: {
-      // Overriding default rules
-      "no-unused-vars": "off", // Turn off default JS no-unused-vars rule
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/explicit-function-return-type": "warn", // Forcing return type annotations
-      "@typescript-eslint/consistent-type-imports": "warn", // Enforce type imports
-
     },
   },
-  // More specific rules for TS files
-    {
-      files: ["**/*.ts"],
-      rules: {
-        "import/order": [
-            "warn",
-            {
-              groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
-              pathGroups: [
-                {
-                  pattern: "~/components/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/assets/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/constants/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/hooks/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/pages/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/types/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/utils/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/store/**",
-                  group: "internal",
-                },
-                {
-                  pattern: "~/lib/**",
-                  group: "internal",
-                },
-              ],
-              "newlines-between": "always",
-              alphabetize: {
-                order: "asc",
-                caseInsensitive: true,
-              },
-            },
-          ],
-         // Add more specific rules for imports
 
-      }
+  // Development logging configuration
+  {
+    files: ['src/developmentLogger.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 
-    }
+  // Test environment configuration
+  {
+    files: ['**/*.test.ts'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        test: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        jest: 'readonly',
+      },
+    },
+  },
+
+  // TypeScript configuration,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './tsconfig.json',
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      'no-console': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+    },
+  },
+  // Node.js CommonJS configuration
+  {
+    files: ['webpack.config.cjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'script',
+      globals: {
+        __dirname: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'writable',
+        process: 'readonly',
+      },
+    },
+  },
+
+  // Prettier integration
+  {
+    plugins: {
+      prettier: prettierPlugin,
+    },
+    rules: {
+      'prettier/prettier': ['error', { usePrettierrc: true }],
+    },
+  },
 ];

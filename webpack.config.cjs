@@ -21,8 +21,8 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js'],
     alias: {
-      '@': path.resolve(__dirname, 'src')
-    }
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
   module: {
     rules: [
@@ -50,6 +50,6 @@ module.exports = {
     hints: false, // Disable performance hints for extensions
   },
   stats: {
-    warnings: false
-  }
+    warnings: false,
+  },
 };

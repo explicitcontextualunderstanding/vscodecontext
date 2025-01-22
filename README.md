@@ -149,7 +149,7 @@ before running the context extraction command. Here's how:
 
 **Important Notes:**
 
-- Execute the extraction command *after* performing the above steps.
+- Execute the extraction command _after_ performing the above steps.
   The context reflects the state at the exact moment the command is run
 - Repeat these steps in different scenarios to get a full view of the
   data accessible to the extension
@@ -200,10 +200,10 @@ module.exports = {
     rules: [
       {
         test: /\.custom$/,
-        use: ["custom-loader"]
-      }
-    ]
-  }
+        use: ['custom-loader'],
+      },
+    ],
+  },
 };
 ```
 
@@ -310,17 +310,17 @@ The extension uses CommonJS modules for VSCode compatibility. Key configuration 
 
 ### Development Commands
 
-| Command                 | Description                                                  |
-| ----------------------- | ------------------------------------------------------------ |
-| `npm run build`         | Run quality checks and build production bundle               |
-| `npm run watch`         | Watch and rebuild on changes                                 |
-| `npm run quality`       | Run all quality checks (linting, formatting, docs)           |
-| `npm run lint`          | Run ESLint checks                                            |
-| `npm run format`        | Format code with Prettier                                    |
-| `npm run lint:markdown` | Lint markdown files                                          |
-| `npm run docs`          | Generate API documentation                                   |
-| `npm run package`       | Build production bundle and package extension                |
-| `npm run package:dev`   | Package development version (skips dependencies)             |
+| Command                 | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| `npm run build`         | Run quality checks and build production bundle     |
+| `npm run watch`         | Watch and rebuild on changes                       |
+| `npm run quality`       | Run all quality checks (linting, formatting, docs) |
+| `npm run lint`          | Run ESLint checks                                  |
+| `npm run format`        | Format code with Prettier                          |
+| `npm run lint:markdown` | Lint markdown files                                |
+| `npm run docs`          | Generate API documentation                         |
+| `npm run package`       | Build production bundle and package extension      |
+| `npm run package:dev`   | Package development version (skips dependencies)   |
 
 ### Module System Configuration
 

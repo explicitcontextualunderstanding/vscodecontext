@@ -10,7 +10,7 @@ import { isError, isObjectWithMessage } from './utils/typeGuards';
  */
 export async function withErrorHandling<T>(
   fn: () => Promise<T>,
-  metadata: { operation: string }
+  metadata: { operation: string },
 ): Promise<T> {
   try {
     return await fn();
@@ -21,13 +21,13 @@ export async function withErrorHandling<T>(
       if (isObjectWithMessage(err)) return err.message;
       return 'Unknown error occurred';
     };
-    
+
     const message = getErrorMessage(error);
-        
+
     throw new ContextProviderError(
       `Failed during ${metadata.operation}: ${message}`,
       'OPERATION_FAILED',
-      metadata.operation
+      metadata.operation,
     );
   }
 }
