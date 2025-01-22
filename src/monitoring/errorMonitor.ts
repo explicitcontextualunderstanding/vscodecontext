@@ -172,7 +172,7 @@ export class ErrorMonitor {
   private sendTelemetry(pattern: ErrorPattern): void {
     // Implementation would depend on telemetry system
     // This is a placeholder for future implementation
-    console.log('Telemetry:', pattern);
+    this.channel.appendLine(`[Telemetry] Pattern detected: ${JSON.stringify(pattern)}`);
   }
 }
 

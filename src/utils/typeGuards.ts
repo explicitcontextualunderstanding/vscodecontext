@@ -30,6 +30,23 @@ export function hasInfoMethod(value: unknown): value is Logger {
   const potentialLogger = value as Partial<Logger>;
   return typeof potentialLogger.info === 'function';
 }
+/**
+ * Type guard to check if a value is a non-null object
+ */
+export function isObject(value: unknown): value is object {
+  return typeof value === 'object' && value !== null;
+}
+
+/**
+ * Type guard to check if a value is an object with a message property
+ */
+export function isObjectWithMessage(value: unknown): value is { message: string } {
+  return (
+    isObject(value) &&
+    'message' in value &&
+    typeof (value as { message: unknown }).message === 'string'
+  );
+}
 
 /**
  * Safely cast unknown error to Error type
