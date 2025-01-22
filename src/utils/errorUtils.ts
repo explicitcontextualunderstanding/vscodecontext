@@ -61,7 +61,7 @@ export function handleError(
   // Convert to Error instance if needed
   const trackedError = isErrorWithMessage(error) ? error : new Error(String(error));
   errorMonitor.trackError(trackedError, metadata);
-  console.error(fullMessage, stack);
+  // Error already tracked by errorMonitor and logged to channel
 }
 
 /**
