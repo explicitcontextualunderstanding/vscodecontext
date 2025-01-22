@@ -1,6 +1,8 @@
 {
   "scripts": {
     "build": "npm run lint && tsc",
+    "postbuild": "npm run sonar",
+    "sonar": "npx sonar-scanner -Dsonar.login=${SONAR_TOKEN} -Dsonar.sources=src -Dsonar.tests=tests -Dsonar.projectVersion=1.0.0",
     "lint": "NODE_OPTIONS=--max_old_space_size=4096 eslint . --config eslint.config.mjs && markdownlint **/*.md",
     "test": "jest",
     "prepare": "npm run build",
@@ -16,7 +18,6 @@
     "format": "prettier --write src/**/*.ts",
     "sonar-scan": "node sonar-project.cjs",
     "prebuild": "npm run sonar-scan",
-    "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
     "clean": "rimraf out coverage *.vsix",
     "purge": "npm run clean && code --uninstall-extension ${npm_package_name} || exit 0",
     "rebuild": "npm run clean && npm install && npm run build",
