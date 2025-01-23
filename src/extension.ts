@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { getConfig } from './config';
+import { name as packageName } from '../package.json';
 
 import { ContextProvider } from './contextProvider';
 import { errorMonitor } from './monitoring/errorMonitor';
@@ -81,22 +83,22 @@ async function extractContext(): Promise<void> {
         );
         return;
       }
-      const config = vscode.workspace.getConfiguration('vscode-context');
-      const includeCategories = config.get('includeCategories', [
-        'workspace',
-        'window',
-        'language',
-        'debug',
-        'sourceControl',
-        'tasks',
-        'extension',
-        'extensionHost',
-        'settings',
-        'keybindings',
-        'theme',
-        'views',
-        'customEditors',
-      ]);
+      const config = getConfig().categories;
+      const includeCategories = [
+        config.enableWorkspaceContext ? 'workspace' : null,
+        config.enableWindowContext ? 'window' : null,
+        config.enableLanguageContext ? 'language' : null,
+        config.enableDebugContext ? 'debug' : null,
+        config.enableSourceControlContext ? 'sourceControl' : null,
+        config.enableTasksContext ? 'tasks' : null,
+        config.enableExtensionContext ? 'extension' : null,
+        config.enableExtensionHostContext ? 'extensionHost' : null,
+        config.enableSettingsContext ? 'settings' : null,
+        config.enableKeybindingsContext ? 'keybindings' : null,
+        config.enableThemeContext ? 'theme' : null,
+        config.enableViewsContext ? 'views' : null,
+        config.enableCustomEditorsContext ? 'customEditors' : null,
+      ].filter(Boolean) as string[];
 
       const contextData: ContextData = await contextProvider.getAllContext(includeCategories);
       outputChannel.clear();
@@ -160,7 +162,7 @@ async function registerWebview(
     async () => {
       const provider = new WebviewProvider(context.extensionUri);
       const registration = vscode.window.registerWebviewViewProvider(
-        'vscode-context.webview',
+        `${packageName}.webview`,
         provider,
       );
       return { provider, registration };
@@ -189,21 +191,21 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
     );
 
     const extractContextCommand = vscode.commands.registerCommand(
-      'vscode-context.extractContext',
+      `${packageName}.extractContext`,
       async () => {
         await extractContext();
       },
     );
 
     const executeSampleCommandRegistration = vscode.commands.registerCommand(
-      'vscode-context.executeSample',
+      `${packageName}.executeSample`,
       async () => {
         await executeSampleCommand();
       },
     );
 
     const createTerminalCommand = vscode.commands.registerCommand(
-      'vscode-context.createTerminal',
+      `${packageName}.createTerminal`,
       async () => {
         await createTerminal();
       },
@@ -264,7 +266,7 @@ export async function deactivate(): Promise<void> {
   await withErrorHandling(
     async () => {
       if (contextProvider) {
-        contextProvider.info('Extension "vscode-context" is being deactivated', {
+        contextProvider.info(`Extension "${packageName}" is being deactivated`, {
           timestamp: new Date().toISOString(),
         });
         contextProvider = null!;

@@ -11,8 +11,9 @@
     "module": "commonjs",
     "target": "ES2022",
     "moduleResolution": "node",
-    "rootDir": "./src",
-    "outDir": "extension/dist"
+    "rootDir": ".",
+    "outDir": "extension/dist",
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "tests/**/*", "jest.config.ts"]
