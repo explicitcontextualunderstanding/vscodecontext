@@ -106,7 +106,7 @@ export interface StateChangeEvent {
   data: {
     previous: unknown;
     current: unknown;
-    changes: string[];
+    changes: unknown[];
   };
   metadata: EventMetadata;
 }
@@ -153,7 +153,7 @@ export function isErrorEvent(event: ContextEvent): event is ErrorEvent {
  * Utility function to create a correlation ID for event tracking
  */
 export function generateCorrelationId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**
