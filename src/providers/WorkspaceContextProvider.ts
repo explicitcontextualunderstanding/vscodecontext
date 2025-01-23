@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getConfig } from '../config';
 
 import type { ContextDataProvider } from '../interfaces/IContextProvider';
 import { ContextCategory } from '../interfaces/IContextProvider';
@@ -30,8 +31,8 @@ export class WorkspaceContextProvider implements ContextDataProvider {
    * @returns true if workspace context gathering is enabled
    */
   isEnabled(): boolean {
-    const config = vscode.workspace.getConfiguration('vscode-context');
-    return config.get('enableWorkspaceContext', true);
+    const config = getConfig().categories;
+    return config.enableWorkspaceContext;
   }
 
   /**
