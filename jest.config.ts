@@ -9,6 +9,10 @@ const config: Config.InitialOptions = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
   verbose: true,
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  moduleNameMapper: {
+    '^vscode$': '<rootDir>/tests/__mocks__/vscode.ts',
+  },
 };
 
 export default config;

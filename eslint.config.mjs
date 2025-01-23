@@ -54,9 +54,9 @@ export default [
     },
   },
 
-  // TypeScript configuration,
+  // TypeScript configuration for source files
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -70,6 +70,25 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       'no-console': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+    },
+  },
+  // TypeScript configuration for test files
+  {
+    files: ['tests/**/*.ts', 'tests/**/*.tsx'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './tests/tsconfig.json',
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      'no-console': 'off',
       '@typescript-eslint/consistent-type-imports': 'error',
     },
   },
