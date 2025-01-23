@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { ContextProvider } from './contextProvider';
 import { errorMonitor } from './monitoring/errorMonitor';
 import { handleError, withErrorHandling } from './utils/errorUtils';
+import type { ContextCategory } from './interfaces/IContextProvider';
 import { EditorContextProvider } from './providers/EditorContextProvider';
 import { TerminalContextProvider } from './providers/TerminalContextProvider';
 import { WorkspaceContextProvider } from './providers/WorkspaceContextProvider';
@@ -85,35 +86,26 @@ async function extractContext(): Promise<void> {
     return;
   }
 
-  try {
-    const config = vscode.workspace.getConfiguration('vscode-context');
-    const includeCategories = config.get('includeCategories', [
-      'workspace',
-      'window',
-      'language',
-      'debug',
-      'sourceControl',
-      'tasks',
-      'extension',
-      'extensionHost',
-      'settings',
-      'keybindings',
-      'theme',
-      'views',
-      'customEditors',
-    ]);
+  const config = vscode.workspace.getConfiguration('vscode-context');
+  const includeCategories = config.get('includeCategories', [
+    'workspace',
+    'window',
+    'language',
+    'debug',
+    'sourceControl',
+    'tasks',
+    'extension',
+    'extensionHost',
+    'settings',
+    'keybindings',
+    'theme',
+    'views',
+    'customEditors',
+  ]); // Explicitly cast to string[]
 
-    const contextData = await contextProvider.getAllContext(includeCategories);
-    outputChannel.clear();
-    outputChannel.appendLine('VSCode Context Data:');
-    outputChannel.appendLine(JSON.stringify(contextData, null, 2));
-    outputChannel.show(true);
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    outputChannel.appendLine(`ERROR: ${err.message}`);
-    outputChannel.show(true);
-    vscode.window.showErrorMessage(`Failed to extract context: ${err.message}`);
-  }
+  const contextCategories = includeCategories.map((category) => category as ContextCategory);
+
+  contextProvider.triggerContextExtraction(contextCategories);
 }
 
 async function executeSampleCommand(): Promise<void> {
@@ -243,6 +235,21 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       { operation: 'startTrackingTerminals' },
       outputChannel,
     );
+
+    // Add event listener for context extraction requests
+    contextProvider.events.on('context-extract-request', async ({ categories }) => {
+      await withErrorHandling(
+        async () => {
+          const contextData = await contextProvider.getAllContext(categories);
+          outputChannel.clear();
+          outputChannel.appendLine('VSCode Context Data:');
+          outputChannel.appendLine(JSON.stringify(contextData, null, 2));
+          outputChannel.show(true);
+        },
+        { operation: 'handleContextExtraction' },
+        outputChannel,
+      );
+    });
 
     const webviewProvider = await registerWebview(context);
 
