@@ -15,7 +15,8 @@ class MockExtensionContext implements vscode.ExtensionContext {
 
   extension: vscode.Extension<unknown> = {} as vscode.Extension<unknown>;
 
-  languageModelAccessInformation: vscode.LanguageModelAccessInformation = {} as vscode.LanguageModelAccessInformation;
+  languageModelAccessInformation: vscode.LanguageModelAccessInformation =
+    {} as vscode.LanguageModelAccessInformation;
 
   environmentVariableCollection: vscode.EnvironmentVariableCollection & {
     getScoped(scope: vscode.EnvironmentVariableScope): vscode.EnvironmentVariableCollection;

@@ -9,9 +9,16 @@ export class TerminalContextProvider implements ContextDataProvider {
   private terminals: vscode.Terminal[] = [];
 
   constructor(private readonly channel: vscode.OutputChannel) {
-    this.terminals = [...vscode.window.terminals];
-    vscode.window.onDidOpenTerminal(this.handleTerminalOpened);
-    vscode.window.onDidCloseTerminal(this.handleTerminalClosed);
+    try {
+      this.channel.appendLine('Initializing TerminalContextProvider...');
+      this.terminals = [...vscode.window.terminals];
+      vscode.window.onDidOpenTerminal(this.handleTerminalOpened);
+      vscode.window.onDidCloseTerminal(this.handleTerminalClosed);
+      this.channel.appendLine('TerminalContextProvider initialized');
+    } catch (error) {
+      this.channel.appendLine(`TerminalContextProvider initialization failed: ${error}`);
+      throw error;
+    }
   }
 
   isEnabled(): boolean {
@@ -34,7 +41,12 @@ export class TerminalContextProvider implements ContextDataProvider {
   }
 
   private readonly handleTerminalOpened = (terminal: vscode.Terminal): void => {
-    this.terminals.push(terminal);
+    try {
+      this.channel.appendLine(`Terminal opened: ${terminal.name}`);
+      this.terminals.push(terminal);
+    } catch (error) {
+      this.channel.appendLine(`Error handling terminal open: ${error}`);
+    }
   };
 
   private readonly handleTerminalClosed = (terminal: vscode.Terminal): void => {
@@ -73,7 +85,7 @@ export class TerminalContextProvider implements ContextDataProvider {
       // Handle different terminal types safely
       const options = terminal.creationOptions;
       if (options && 'shellPath' in options) {
-        return (options as vscode.TerminalOptions).shellPath || null;
+        return (options as vscode.TerminalOptions).shellPath ?? null;
       }
 
       // Safely access internal properties as last resort
