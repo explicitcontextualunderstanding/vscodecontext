@@ -7,7 +7,7 @@ import type { IContextProvider } from './interfaces/IContextProvider';
  */
 export const EXTRACT_REQUEST = 'EXTRACT_REQUEST';
 
-import type * as vscode from 'vscode';
+import * as vscode from 'vscode';
 
 /**
  * Core provider class that manages VS Code context gathering.
@@ -82,5 +82,45 @@ export class ContextProvider extends EventEmitter implements IContextProvider {
     if (data) {
       this.outputChannel.appendLine(JSON.stringify(data, null, 2));
     }
+  }
+
+  /**
+   * Gathers context data for all categories
+   * @returns Promise resolving to context data for all categories
+   * @description Gathers context data for all categories
+   */
+  public async gatherContext(): Promise<ContextData> {
+    const contextData: ContextData = {
+      Editor: {
+        activeTextEditor: vscode.window.activeTextEditor,
+        selections: vscode.window.activeTextEditor?.selections,
+        visibleTextEditors: vscode.window.visibleTextEditors,
+      },
+      Terminal: {
+        activeTerminal: vscode.window.activeTerminal,
+        allTerminals: vscode.window.terminals,
+      },
+      Workspace: {
+        workspaceFolders: vscode.workspace.workspaceFolders,
+        workspaceConfiguration: vscode.workspace.getConfiguration(),
+      },
+      Debug: {
+        activeDebugSessions: vscode.debug.activeDebugSession,
+        breakpoints: vscode.debug.breakpoints,
+      },
+      SCM: {
+        repositories:
+          vscode.workspace.workspaceFolders?.map((folder) => ({
+            name: folder.name,
+            uri: folder.uri,
+          })) || [],
+        commitDetails: [], // Placeholder for commit details
+      },
+      Tasks: {
+        taskConfigurations: vscode.tasks.taskExecutions,
+        taskStatuses: [], // Placeholder for task statuses
+      },
+    };
+    return contextData;
   }
 }

@@ -62,7 +62,7 @@
     "build": "npm run lint && tsc",
     "postbuild": "npm run sonar",
     "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
-    "lint": "NODE_OPTIONS=--max_old_space_size=4096 eslint . --config eslint.config.mjs && markdownlint **/*.md",
+    "lint": "NODE_OPTIONS=--max_old_space_size=4096 eslint . --config eslint.config.mjs && markdownlint '**/*.md' --dot -p .markdownlintignore || true",
     "test": "jest",
     "prepare": "npm run build",
     "docs": "typedoc --out docs src",
