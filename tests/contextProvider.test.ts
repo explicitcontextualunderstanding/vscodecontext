@@ -1,7 +1,8 @@
-import * as vscode from 'vscode';
-import { mock } from 'jest-mock-extended';
+import type * as vscode from 'vscode';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { mock } from 'vitest-mock-extended';
 import { ContextProvider } from '../src/contextProvider';
-import { ContextCategory, ContextDataProvider } from '../src/interfaces/IContextProvider';
+import { ContextCategory, type ContextDataProvider } from '../src/interfaces/IContextProvider';
 
 describe('ContextProvider', () => {
   let contextProvider: ContextProvider;
@@ -17,26 +18,34 @@ describe('ContextProvider', () => {
     // Create mock providers
     mockWorkspaceProvider = {
       category: ContextCategory.Workspace,
-      isEnabled: jest.fn().mockReturnValue(true),
-      getContext: jest.fn().mockResolvedValue({
-        workspaceFolders: [{ name: 'test', path: '/test' }]
-      })
+      isEnabled: vi.fn().mockReturnValue(true),
+      getContext: vi.fn().mockResolvedValue({
+        workspaceFolders: [{ name: 'test', path: '/test' }],
+      }),
     };
 
     mockEditorProvider = {
       category: ContextCategory.Editor,
-      isEnabled: jest.fn().mockReturnValue(true),
-      getContext: jest.fn().mockResolvedValue({
-        activeDocument: { uri: 'file:///test.ts', languageId: 'typescript' }
-      })
+      isEnabled: vi.fn().mockReturnValue(true),
+      getContext: vi.fn().mockResolvedValue({
+        activeDocument: {
+          uri: 'file:///test.ts',
+          languageId: 'typescript',
+        },
+      }),
     };
 
     mockTerminalProvider = {
       category: ContextCategory.Terminal,
-      isEnabled: jest.fn().mockReturnValue(true),
-      getContext: jest.fn().mockResolvedValue({
-        terminals: [{ name: 'test', state: 'active' }]
-      })
+      isEnabled: vi.fn().mockReturnValue(true),
+      getContext: vi.fn().mockResolvedValue({
+        terminals: [
+          {
+            name: 'test',
+            state: 'active',
+          },
+        ],
+      }),
     };
 
     // Initialize context provider
@@ -50,12 +59,11 @@ describe('ContextProvider', () => {
       contextProvider.registerProvider(mockTerminalProvider);
 
       // Test registration by getting context
-      return contextProvider.getAllContext(['workspace', 'editor', 'terminal'])
-        .then(context => {
-          expect(context).toHaveProperty('workspace');
-          expect(context).toHaveProperty('editor');
-          expect(context).toHaveProperty('terminal');
-        });
+      return contextProvider.getAllContext(['workspace', 'editor', 'terminal']).then((context) => {
+        expect(context).toHaveProperty('workspace');
+        expect(context).toHaveProperty('editor');
+        expect(context).toHaveProperty('terminal');
+      });
     });
   });
 
@@ -67,7 +75,7 @@ describe('ContextProvider', () => {
     });
 
     it('should gather context only from enabled providers', async () => {
-      (mockEditorProvider.isEnabled as jest.Mock).mockReturnValue(false);
+      (mockEditorProvider.isEnabled as Mock).mockReturnValue(false);
 
       const context = await contextProvider.getAllContext(['workspace', 'editor', 'terminal']);
 
@@ -104,8 +112,89 @@ describe('ContextProvider', () => {
       (mockWorkspaceProvider.getContext as jest.Mock).mockRejectedValue(error);
 
       const context = await contextProvider.getAllContext(['workspace']);
-      
       expect(context).toEqual({});
+    });
+  });
+
+  describe('Provider Configuration Validation', () => {
+    it('should detect invalid provider category', () => {
+      const invalidProvider = {
+        category: 'invalid' as ContextCategory,
+        isEnabled: () => true,
+        getContext: () => Promise.resolve({}),
+      };
+
+      contextProvider.registerProvider(invalidProvider);
+      contextProvider.validateProviderConfiguration();
+
+      const logs = contextProvider.getLogHistory();
+      expect(logs).toContainEqual(
+        expect.objectContaining({
+          level: 'error',
+          message: 'Invalid provider category',
+        }),
+      );
+    });
+
+    it('should detect missing required methods', () => {
+      const invalidProvider = {
+        category: ContextCategory.Workspace,
+      } as unknown as ContextDataProvider;
+
+      contextProvider.registerProvider(invalidProvider);
+      contextProvider.validateProviderConfiguration();
+
+      const logs = contextProvider.getLogHistory();
+      expect(
+        logs.some(
+          (log) => log.level === 'error' && log.message === 'Provider missing isEnabled method',
+        ),
+      ).toBe(true);
+      expect(
+        logs.some(
+          (log) => log.level === 'error' && log.message === 'Provider missing getContext method',
+        ),
+      ).toBe(true);
+    });
+
+    it('should validate onConfigurationChanged method when present', () => {
+      const invalidProvider = {
+        category: ContextCategory.Workspace,
+        isEnabled: () => true,
+        getContext: () => Promise.resolve({}),
+        onConfigurationChanged: 'not a function' as unknown as () => void,
+      } as ContextDataProvider;
+
+      contextProvider.registerProvider(invalidProvider);
+      contextProvider.validateProviderConfiguration();
+
+      const logs = contextProvider.getLogHistory();
+      expect(
+        logs.some(
+          (log) => log.level === 'error' && log.message === 'Invalid onConfigurationChanged method',
+        ),
+      ).toBe(true);
+    });
+
+    it('should call onConfigurationChanged when valid', () => {
+      const configChangeHandler = jest.fn();
+      const validProvider = {
+        category: ContextCategory.Workspace,
+        isEnabled: () => true,
+        getContext: () => Promise.resolve({}),
+        onConfigurationChanged: configChangeHandler,
+      };
+
+      contextProvider.registerProvider(validProvider);
+      contextProvider.validateProviderConfiguration();
+
+      expect(configChangeHandler).toHaveBeenCalled();
+      const logs = contextProvider.getLogHistory();
+      expect(
+        logs.some(
+          (log) => log.level === 'info' && log.message === 'Provider configuration updated',
+        ),
+      ).toBe(true);
     });
   });
 });
