@@ -70,34 +70,40 @@ async function handleWindowStateChange(state: vscode.WindowState): Promise<void>
 }
 
 async function extractContext(): Promise<void> {
-  await withErrorHandling(
-    () => {
-      const config = vscode.workspace.getConfiguration('vscode-context');
-      const includeCategories = config.get('includeCategories', [
-        'workspace',
-        'window',
-        'language',
-        'debug',
-        'sourceControl',
-        'tasks',
-        'extension',
-        'extensionHost',
-        'settings',
-        'keybindings',
-        'theme',
-        'views',
-        'customEditors',
-      ]);
+  if (!contextProvider) {
+    vscode.window.showErrorMessage('Context provider not initialized');
+    return;
+  }
 
-      const contextData = contextProvider.getAllContext(includeCategories);
-      outputChannel.clear();
-      outputChannel.appendLine('VSCode Context Data:');
-      outputChannel.appendLine(JSON.stringify(contextData, null, 2));
-      outputChannel.show(true);
-    },
-    { operation: 'extractContext' },
-    outputChannel,
-  );
+  try {
+    const config = vscode.workspace.getConfiguration('vscode-context');
+    const includeCategories = config.get('includeCategories', [
+      'workspace',
+      'window',
+      'language',
+      'debug',
+      'sourceControl',
+      'tasks',
+      'extension',
+      'extensionHost',
+      'settings',
+      'keybindings',
+      'theme',
+      'views',
+      'customEditors',
+    ]);
+
+    const contextData = await contextProvider.getAllContext(includeCategories);
+    outputChannel.clear();
+    outputChannel.appendLine('VSCode Context Data:');
+    outputChannel.appendLine(JSON.stringify(contextData, null, 2));
+    outputChannel.show(true);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    outputChannel.appendLine(`ERROR: ${err.message}`);
+    outputChannel.show(true);
+    vscode.window.showErrorMessage(`Failed to extract context: ${err.message}`);
+  }
 }
 
 async function executeSampleCommand(): Promise<void> {
@@ -186,6 +192,12 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
     const extractContextCommand = vscode.commands.registerCommand(
       'vscode-context.extractContext',
       async () => {
+        if (!contextProvider) {
+          vscode.window.showErrorMessage(
+            'Context provider not initialized - extension activation failed',
+          );
+          return;
+        }
         await extractContext();
       },
     );
