@@ -62,26 +62,20 @@ export class ContextProvider implements IContextProvider {
   }
 
   async getAllContext(categories: string[]): Promise<Record<string, unknown>> {
-    return Promise.resolve({
-      workspace: categories.includes('workspace')
-        ? {
-            name: vscode.workspace.name,
-            folders: vscode.workspace.workspaceFolders?.map((f) => f.uri.fsPath) || [],
-          }
-        : {},
-      editor: categories.includes('editor')
-        ? {
-            activeDocument: vscode.window.activeTextEditor?.document.fileName,
-            language: vscode.window.activeTextEditor?.document.languageId,
-          }
-        : {},
-      environment: categories.includes('environment')
-        ? {
-            vscodeVersion: vscode.version,
-            os: process.platform,
-          }
-        : {},
-    });
+    const results: Record<string, unknown> = {};
+    for (const provider of this.providers) {
+      if (categories.includes(provider.category) && provider.isEnabled()) {
+        try {
+          results[provider.category] = await provider.getContext();
+          this.info(`Retrieved context from ${provider.category} provider`);
+        } catch (error) {
+          this.error(`Failed to get context from ${provider.category} provider`, {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    }
+    return results;
   }
 
   startTrackingTerminals(): void {
