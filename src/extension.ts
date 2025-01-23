@@ -4,6 +4,9 @@ import * as vscode from 'vscode';
 import { ContextProvider } from './contextProvider';
 import { errorMonitor } from './monitoring/errorMonitor';
 import { handleError, withErrorHandling } from './utils/errorUtils';
+import { EditorContextProvider } from './providers/EditorContextProvider';
+import { TerminalContextProvider } from './providers/TerminalContextProvider';
+import { WorkspaceContextProvider } from './providers/WorkspaceContextProvider';
 import { WebviewProvider } from './webview/WebviewProvider';
 
 let contextProvider: ContextProvider;
@@ -23,8 +26,15 @@ process.on('unhandledRejection', (reason) => {
 });
 
 async function initializeContextProvider(context: vscode.ExtensionContext): Promise<void> {
+  const outputChannel = vscode.window.createOutputChannel('VSCode Context');
   contextProvider = new ContextProvider(context);
-  contextProvider.info('Extension activated');
+
+  // Register specialized providers
+  contextProvider.registerProvider(new WorkspaceContextProvider(outputChannel));
+  contextProvider.registerProvider(new EditorContextProvider(outputChannel));
+  contextProvider.registerProvider(new TerminalContextProvider(outputChannel));
+
+  contextProvider.info('Extension activated with context providers');
 }
 
 function subscribeToEvent(
