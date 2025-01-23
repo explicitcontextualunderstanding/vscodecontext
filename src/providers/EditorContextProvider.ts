@@ -4,16 +4,43 @@ import type { ContextDataProvider } from '../interfaces/IContextProvider';
 import { ContextCategory } from '../interfaces/IContextProvider';
 import { withErrorHandling } from '../utils/errorUtils';
 
+/**
+ * Provides context information about the VS Code editor state.
+ * This includes information about:
+ * - Active text document
+ * - Current selections
+ * - Diagnostic messages (errors, warnings, etc.)
+ *
+ * This provider implements the Configurable Context Providers pattern,
+ * allowing it to be enabled/disabled through VS Code settings.
+ */
 export class EditorContextProvider implements ContextDataProvider {
+  /** Identifies this provider's context category */
   readonly category = ContextCategory.Editor;
 
+  /**
+   * Creates a new EditorContextProvider
+   * @param channel Output channel for logging provider operations
+   */
   constructor(private readonly channel: vscode.OutputChannel) {}
 
+  /**
+   * Checks if this provider is enabled in VS Code settings
+   * Part of the Configurable Context Providers pattern
+   * @returns true if editor context gathering is enabled
+   */
   isEnabled(): boolean {
     const config = vscode.workspace.getConfiguration('vscode-context');
     return config.get('enableEditorContext', true);
   }
 
+  /**
+   * Gathers current editor context information
+   * @returns Object containing:
+   * - activeDocument: Information about the currently active text document
+   * - selections: Array of current text selections with their content
+   * - diagnostics: Current diagnostic messages (errors, warnings) for the document
+   */
   async getContext(): Promise<Record<string, unknown>> {
     return withErrorHandling(
       () => {
