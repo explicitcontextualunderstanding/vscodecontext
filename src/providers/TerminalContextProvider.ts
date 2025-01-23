@@ -73,7 +73,14 @@ export class TerminalContextProvider implements ContextDataProvider {
     };
   }
 
-  public getTerminalData() {
+  public getTerminalData(): {
+    terminal: vscode.Terminal;
+    creationTime: Date;
+    lastActivity: Date;
+    inputCount: number;
+    outputCount: number;
+    totalLifetime: number;
+  }[] {
     return this.terminals;
   }
 
