@@ -2,9 +2,6 @@
   "name": "vscode-context",
   "version": "0.8.0",
   "publisher": "rooveterinaryinc",
-  "activationEvents": [
-    "onCommand:vscode-context.extractContext"
-  ],
   "main": "./extension/dist/extension.js",
   "repository": {
     "type": "git",
@@ -113,6 +110,8 @@
     "ts-node": "^10.9.2",
     "typedoc": "^0.27.6",
     "typescript": "^5.0.4",
+    "vitest": "^3.0.3",
+    "vitest-mock-extended": "^2.0.2",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1",
     "webpack-node-externals": "^3.0.0",

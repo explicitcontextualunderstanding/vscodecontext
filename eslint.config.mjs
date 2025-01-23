@@ -40,7 +40,7 @@ export default [
 
   // Test environment configuration
   {
-    files: ['**/*.test.ts'],
+    files: ['**/*.test.ts', 'tests/setup.ts'],
     languageOptions: {
       globals: {
         describe: 'readonly',
@@ -50,6 +50,7 @@ export default [
         beforeAll: 'readonly',
         afterAll: 'readonly',
         jest: 'readonly',
+        global: 'readonly',
       },
     },
   },
