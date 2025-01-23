@@ -1,0 +1,144 @@
+import type { ContextEvent, ContextEventType } from './events';
+import * as vscode from 'vscode';
+
+/**
+ * Configuration for event aggregation
+ */
+export interface AggregationConfig {
+  batchWindow: number; // Time window in ms for batching similar events
+  maxBatchSize: number; // Maximum number of events in a batch
+  flushInterval: number; // Interval in ms to force flush events
+}
+
+/**
+ * Strategy for aggregating events
+ */
+export interface AggregationStrategy {
+  shouldAggregate: (event1: ContextEvent, event2: ContextEvent) => boolean;
+  aggregate: (events: ContextEvent[]) => ContextEvent;
+}
+
+/**
+ * Manages event aggregation and processing
+ */
+export class EventAggregator {
+  private readonly eventQueue: Map<ContextEventType, ContextEvent[]>;
+  private readonly strategies: Map<ContextEventType, AggregationStrategy>;
+  private flushTimer: ReturnType<typeof globalThis.setInterval> | null;
+  private readonly outputChannel: vscode.OutputChannel;
+
+  constructor(
+    private readonly config: AggregationConfig,
+    outputChannel?: vscode.OutputChannel,
+  ) {
+    this.eventQueue = new Map();
+    this.strategies = new Map();
+    this.flushTimer = null;
+    this.outputChannel = outputChannel || vscode.window.createOutputChannel('Event Aggregator');
+    this.startFlushTimer();
+  }
+
+  /**
+   * Registers an aggregation strategy for a specific event type
+   */
+  registerStrategy(eventType: ContextEventType, strategy: AggregationStrategy): void {
+    this.strategies.set(eventType, strategy);
+  }
+
+  /**
+   * Adds an event to the queue for processing
+   */
+  queueEvent(event: ContextEvent): void {
+    const existingEvents = this.eventQueue.get(event.type) || [];
+
+    if (this.shouldProcessImmediately(event)) {
+      this.processEvent(event);
+      return;
+    }
+
+    existingEvents.push(event);
+    this.eventQueue.set(event.type, existingEvents);
+
+    if (existingEvents.length >= this.config.maxBatchSize) {
+      this.flushEventType(event.type);
+    }
+  }
+
+  /**
+   * Processes all queued events
+   */
+  flush(): void {
+    Array.from(this.eventQueue.keys()).forEach((type) => this.flushEventType(type));
+  }
+
+  /**
+   * Determines if an event should bypass aggregation
+   */
+  private shouldProcessImmediately(event: ContextEvent): boolean {
+    return event.metadata.priority === 'high' || event.type.includes('ERROR');
+  }
+
+  /**
+   * Processes a single event
+   */
+  private processEvent(event: ContextEvent): void {
+    this.outputChannel.appendLine(`Processing event: ${event.type}`);
+    this.outputChannel.appendLine(JSON.stringify(event, null, 2));
+  }
+
+  /**
+   * Processes all events of a specific type
+   */
+  private flushEventType(type: ContextEventType): void {
+    const events = this.eventQueue.get(type) || [];
+    if (events.length === 0) return;
+
+    const strategy = this.strategies.get(type);
+    if (strategy && events.length > 1) {
+      const aggregatedEvent = strategy.aggregate(events);
+      this.processEvent(aggregatedEvent);
+    } else {
+      events.forEach((event) => this.processEvent(event));
+    }
+
+    this.eventQueue.delete(type);
+  }
+
+  /**
+   * Starts the periodic flush timer
+   */
+  private startFlushTimer(): void {
+    if (this.flushTimer) {
+      globalThis.clearInterval(this.flushTimer);
+    }
+
+    this.flushTimer = globalThis.setInterval(() => {
+      this.flush();
+    }, this.config.flushInterval);
+  }
+
+  /**
+   * Cleans up resources
+   */
+  dispose(): void {
+    if (this.flushTimer) {
+      globalThis.clearInterval(this.flushTimer);
+      this.flushTimer = null;
+    }
+    this.flush();
+    this.eventQueue.clear();
+    this.strategies.clear();
+    this.outputChannel.dispose();
+  }
+}
+
+/**
+ * Creates a default configuration for event aggregation
+ */
+export function createDefaultConfig(): AggregationConfig {
+  return {
+    batchWindow: 1000, // 1 second batch window
+    maxBatchSize: 100, // Maximum 100 events per batch
+    flushInterval: 5000, // Flush every 5 seconds
+  };
+}
