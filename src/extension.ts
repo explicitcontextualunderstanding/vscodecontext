@@ -1,14 +1,10 @@
-/* eslint-disable @typescript-eslint/require-await, @typescript-eslint/no-floating-promises, @typescript-eslint/await-thenable */
 import * as vscode from 'vscode';
 
 import { ContextProvider } from './contextProvider';
 import { errorMonitor } from './monitoring/errorMonitor';
 import { handleError, withErrorHandling } from './utils/errorUtils';
-import type { ContextCategory } from './interfaces/IContextProvider';
-import { EditorContextProvider } from './providers/EditorContextProvider';
-import { TerminalContextProvider } from './providers/TerminalContextProvider';
-import { WorkspaceContextProvider } from './providers/WorkspaceContextProvider';
 import { WebviewProvider } from './webview/WebviewProvider';
+import type { ContextData } from './interfaces/IContextProvider';
 
 let contextProvider: ContextProvider;
 let outputChannel: vscode.OutputChannel;
@@ -26,16 +22,15 @@ process.on('unhandledRejection', (reason) => {
   );
 });
 
-async function initializeContextProvider(context: vscode.ExtensionContext): Promise<void> {
-  const outputChannel = vscode.window.createOutputChannel('VSCode Context');
-  contextProvider = new ContextProvider(context);
-
-  // Register specialized providers
-  contextProvider.registerProvider(new WorkspaceContextProvider(outputChannel));
-  contextProvider.registerProvider(new EditorContextProvider(outputChannel));
-  contextProvider.registerProvider(new TerminalContextProvider(outputChannel));
-
-  contextProvider.info('Extension activated with context providers');
+async function initializeContextProvider(): Promise<void> {
+  await withErrorHandling(
+    async () => {
+      contextProvider = new ContextProvider(outputChannel);
+      contextProvider.info('Extension activated', {});
+    },
+    { operation: 'initializeContextProvider' },
+    outputChannel,
+  );
 }
 
 function subscribeToEvent(
@@ -53,12 +48,11 @@ function subscribeToEvent(
 
 async function handleEditorChange(editor: vscode.TextEditor | undefined): Promise<void> {
   await withErrorHandling(
-    () => {
+    async () => {
       contextProvider.info(`Active editor changed: ${editor?.document.uri.toString()}`, {
         uri: editor?.document.uri.toString(),
         language: editor?.document.languageId,
       });
-      return Promise.resolve();
     },
     { operation: 'handleEditorChange', uri: editor?.document.uri.toString() },
     outputChannel,
@@ -67,12 +61,10 @@ async function handleEditorChange(editor: vscode.TextEditor | undefined): Promis
 
 async function handleWindowStateChange(state: vscode.WindowState): Promise<void> {
   await withErrorHandling(
-    () => {
-      return Promise.resolve().then(() => {
-        contextProvider.info('Window state changed', {
-          focused: state.focused,
-          activeTerminal: vscode.window.activeTerminal?.name,
-        });
+    async () => {
+      contextProvider.info('Window state changed', {
+        focused: state.focused,
+        activeTerminal: vscode.window.activeTerminal?.name,
       });
     },
     { operation: 'handleWindowStateChange' },
@@ -81,31 +73,40 @@ async function handleWindowStateChange(state: vscode.WindowState): Promise<void>
 }
 
 async function extractContext(): Promise<void> {
-  if (!contextProvider) {
-    vscode.window.showErrorMessage('Context provider not initialized');
-    return;
-  }
+  await withErrorHandling(
+    async () => {
+      if (!contextProvider) {
+        vscode.window.showErrorMessage(
+          'Context provider not initialized - extension activation failed',
+        );
+        return;
+      }
+      const config = vscode.workspace.getConfiguration('vscode-context');
+      const includeCategories = config.get('includeCategories', [
+        'workspace',
+        'window',
+        'language',
+        'debug',
+        'sourceControl',
+        'tasks',
+        'extension',
+        'extensionHost',
+        'settings',
+        'keybindings',
+        'theme',
+        'views',
+        'customEditors',
+      ]);
 
-  const config = vscode.workspace.getConfiguration('vscode-context');
-  const includeCategories = config.get('includeCategories', [
-    'workspace',
-    'window',
-    'language',
-    'debug',
-    'sourceControl',
-    'tasks',
-    'extension',
-    'extensionHost',
-    'settings',
-    'keybindings',
-    'theme',
-    'views',
-    'customEditors',
-  ]); // Explicitly cast to string[]
-
-  const contextCategories = includeCategories.map((category) => category as ContextCategory);
-
-  contextProvider.triggerContextExtraction(contextCategories);
+      const contextData: ContextData = await contextProvider.getAllContext(includeCategories);
+      outputChannel.clear();
+      outputChannel.appendLine('VSCode Context Data:');
+      outputChannel.appendLine(JSON.stringify(contextData, null, 2));
+      outputChannel.show(true);
+    },
+    { operation: 'extractContext' },
+    outputChannel,
+  );
 }
 
 async function executeSampleCommand(): Promise<void> {
@@ -173,11 +174,7 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
   try {
     outputChannel = vscode.window.createOutputChannel('VSCode Context');
 
-    await withErrorHandling(
-      () => initializeContextProvider(context),
-      { operation: 'initializeContextProvider' },
-      outputChannel,
-    );
+    await initializeContextProvider();
 
     const onDidChangeActiveTextEditor = subscribeToEvent('onDidChangeActiveTextEditor', () =>
       vscode.window.onDidChangeActiveTextEditor(async (editor) => {
@@ -186,20 +183,14 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
     );
 
     const onDidChangeWindowState = subscribeToEvent('onDidChangeWindowState', () =>
-      vscode.window.onDidChangeWindowState((state) => {
-        void handleWindowStateChange(state);
+      vscode.window.onDidChangeWindowState(async (state) => {
+        await handleWindowStateChange(state);
       }),
     );
 
     const extractContextCommand = vscode.commands.registerCommand(
       'vscode-context.extractContext',
       async () => {
-        if (!contextProvider) {
-          vscode.window.showErrorMessage(
-            'Context provider not initialized - extension activation failed',
-          );
-          return;
-        }
         await extractContext();
       },
     );
@@ -236,21 +227,6 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       outputChannel,
     );
 
-    // Add event listener for context extraction requests
-    contextProvider.events.on('context-extract-request', async ({ categories }) => {
-      await withErrorHandling(
-        async () => {
-          const contextData = await contextProvider.getAllContext(categories);
-          outputChannel.clear();
-          outputChannel.appendLine('VSCode Context Data:');
-          outputChannel.appendLine(JSON.stringify(contextData, null, 2));
-          outputChannel.show(true);
-        },
-        { operation: 'handleContextExtraction' },
-        outputChannel,
-      );
-    });
-
     const webviewProvider = await registerWebview(context);
 
     context.subscriptions.push(
@@ -264,6 +240,11 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       onDidTerminateDebugSession,
       webviewProvider.registration,
     );
+
+    // Subscribe to ContextProvider.EXTRACT_REQUEST event
+    contextProvider.on('extractRequest', async () => {
+      await extractContext();
+    });
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     errorMonitor.trackError(err, { phase: 'activation' });
