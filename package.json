@@ -1,13 +1,75 @@
 {
+  "name": "vscode-context",
+  "version": "0.0.7",
+  "publisher": "rooveterinaryinc",
+  "activationEvents": [
+    "onCommand:vscode-context.extractContext"
+  ],
+  "main": "./extension/dist/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/explicitcontextualunderstanding/vscodecontext"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-context.extractContext",
+        "title": "Extract VSCode Context"
+      }
+    ],
+    "configuration": {
+      "title": "VSCode Context",
+      "properties": {
+        "vscode-context.enableWorkspaceContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gathering workspace-related context (e.g., opened folders, configuration)."
+        },
+        "vscode-context.enableEditorContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gathering editor-related context (e.g., active editor, selections)."
+        },
+        "vscode-context.enableTerminalContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gathering terminal-related context (e.g., active terminal, terminals)."
+        },
+        "vscode-context.enableDebugContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gathering debug-related context (e.g., active debug session)."
+        },
+        "vscode-context.enableScmContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gathering SCM-related context (e.g., source control repositories)."
+        },
+        "vscode-context.enableTasksContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gathering tasks-related context (e.g., available tasks)."
+        },
+        "vscode-context.enableExtensionContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable gathering extension-related context (e.g., global and workspace state)."
+        }
+      }
+    }
+  },
   "scripts": {
     "build": "npm run lint && tsc",
     "postbuild": "npm run sonar",
-    "sonar": "npx sonar-scanner -Dsonar.login=${SONAR_TOKEN} -Dsonar.sources=src -Dsonar.tests=tests -Dsonar.projectVersion=1.0.0",
+    "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
     "lint": "NODE_OPTIONS=--max_old_space_size=4096 eslint . --config eslint.config.mjs && markdownlint **/*.md",
     "test": "jest",
     "prepare": "npm run build",
     "docs": "typedoc --out docs src",
-    "compile": "tsc -p ./ && cp package.json out/package.json",
+    "compile": "rimraf extension/dist && tsc -p ./ && ls extension/dist && cp package.json extension/dist/",
     "vscode:prepublish": "npm run compile",
     "postinstall": "echo 'VSCode extension post-install complete'",
     "quality": "npm run lint && npm run format && npm run lint:markdown && npm run docs",
@@ -46,9 +108,13 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typedoc": "^0.27.6",
     "typescript": "^5.0.4",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-node-externals": "^3.0.0",
     "winston": "3.14.0"
   },
   "dependencies": {
