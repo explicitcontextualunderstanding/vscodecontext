@@ -15,4 +15,7 @@ export enum ContextCategory {
   Editor = 'Editor',
   Terminal = 'Terminal',
   Workspace = 'Workspace',
+  Debug = 'Debug',
+  SCM = 'SCM',
+  Tasks = 'Tasks',
 }
