@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { ContextDataProvider } from '../interfaces/IContextProvider';
 import { ContextCategory } from '../interfaces/IContextProvider';
+import { getConfig } from '../config';
 
 /**
  * Manages and provides context information about VS Code integrated terminals.
@@ -74,5 +75,14 @@ export class TerminalContextProvider implements ContextDataProvider {
 
   public getTerminalData() {
     return this.terminals;
+  }
+
+  /**
+   * Checks if terminal context gathering is enabled in settings
+   * @returns true if terminal context gathering is enabled
+   */
+  public isEnabled(): boolean {
+    const config = getConfig().categories;
+    return config.enableTerminalContext;
   }
 }
