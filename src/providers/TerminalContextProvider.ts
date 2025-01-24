@@ -124,9 +124,11 @@ export class TerminalContextProvider implements ContextDataProvider {
 
       return typeof shellPath === 'string' ? shellPath : null;
     } catch (error) {
-      this.channel.appendLine(
-        `Error getting shell path: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      console.log(error);
+      // TODO Replace this
+      // this.channel.appendLine(
+      //   `Error getting shell path: ${error instanceof Error ? error.message : String(error)}`,
+      // );
       return null;
     }
   }
