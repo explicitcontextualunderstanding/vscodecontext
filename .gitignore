@@ -12,3 +12,4 @@ dist/
 .sonar/
 docs/
 vscodecontext.json
+.vscode-test/
