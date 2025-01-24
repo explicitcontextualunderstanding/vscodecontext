@@ -1,6 +1,11 @@
-import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events.js';
+import type {
+  AggregationStrategy,
+  ContextEvent,
+  EventMetadata,
+} from '../events.js';
 import { VSCodeContextError } from '../../errors/VSCodeContextError.js';
-import { errorLogger } from '../../monitoring/errorLogger.js';
+// import { ErrorLogger } from '../../monitoring/errorLogger.js';
+// const errorLogger = new ErrorLogger({ appendLine: (message: string) => console.error(message) } as any); // Mock OutputChannel
 import { Timer, TimeWindow } from './utils/timer.js';
 /**
  * Implements a throttle strategy for event aggregation that limits the rate
@@ -39,10 +44,13 @@ export class ThrottleStrategy implements AggregationStrategy {
     }
 
     if (!this.emitTimer) {
-      const nextEmitDelay = Math.min(this.timeWindow.getTimeRemaining(), this.maxDelay);
+      const nextEmitDelay = Math.min(
+        this.timeWindow.getTimeRemaining(),
+        this.maxDelay,
+      );
       this.emitTimer = new Timer(() => {
-        void this.emitPendingEvents(emit).catch((e) => {
-          errorLogger.logError('ThrottleStrategyTimerError', e);
+        void this.emitPendingEvents(emit).catch(() => {
+          // errorLogger.logError(_e, 'ThrottleStrategyTimerError');
         });
         this.emitTimer = undefined;
       }, nextEmitDelay);

@@ -40,7 +40,9 @@ export function isObject(value: unknown): value is object {
 /**
  * Type guard to check if a value is an object with a message property
  */
-export function isObjectWithMessage(value: unknown): value is { message: string } {
+export function isObjectWithMessage(
+  value: unknown,
+): value is { message: string } {
   return (
     isObject(value) &&
     'message' in value &&

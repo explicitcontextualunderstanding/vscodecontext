@@ -30,7 +30,10 @@ export class TerminalContextProvider implements ContextDataProvider {
   constructor() {
     vscode.window.onDidOpenTerminal(this.onDidOpenTerminal, this);
     vscode.window.onDidCloseTerminal(this.onDidCloseTerminal, this);
-    vscode.window.onDidChangeActiveTerminal(this.onDidChangeActiveTerminal, this);
+    vscode.window.onDidChangeActiveTerminal(
+      this.onDidChangeActiveTerminal,
+      this,
+    );
   }
 
   private onDidOpenTerminal(terminal: vscode.Terminal): void {
@@ -51,7 +54,9 @@ export class TerminalContextProvider implements ContextDataProvider {
     }
   }
 
-  private onDidChangeActiveTerminal(terminal: vscode.Terminal | undefined): void {
+  private onDidChangeActiveTerminal(
+    terminal: vscode.Terminal | undefined,
+  ): void {
     if (terminal) {
       const terminalData = this.terminals.find((t) => t.terminal === terminal);
       if (terminalData) {

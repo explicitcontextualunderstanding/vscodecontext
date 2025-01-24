@@ -18,7 +18,8 @@ export function withErrorHandling<T>(
 ): Promise<T> {
   try {
     const result = fn();
-    const promise = result instanceof Promise ? result : Promise.resolve(result);
+    const promise =
+      result instanceof Promise ? result : Promise.resolve(result);
     return promise.catch((error: unknown) => {
       const err = error instanceof Error ? error : new Error(String(error));
       handleError(err, metadata, channel);
@@ -59,7 +60,9 @@ export function handleError(
     channel.appendLine(contextStr);
   }
   // Convert to Error instance if needed
-  const trackedError = isErrorWithMessage(error) ? error : new Error(String(error));
+  const trackedError = isErrorWithMessage(error)
+    ? error
+    : new Error(String(error));
   errorMonitor.trackError(trackedError, metadata);
   // Error already tracked by errorMonitor and logged to channel
 }

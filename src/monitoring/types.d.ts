@@ -9,9 +9,8 @@ export interface ErrorMetrics {
   /** Array of context objects captured with each occurrence (last 10 only) */
   contexts: Array<Record<string, unknown>>;
 }
-
 export interface ErrorPattern {
   code: string;
   frequency: number;
-  timeWindow: number; // in milliseconds
+  timeWindow: number;
 }

@@ -17,7 +17,11 @@ export interface Logger {
   verbose(message: string, metadata?: Record<string, unknown>): void;
 
   // Structured logging
-  log(level: LogLevel, message: string, metadata?: Record<string, unknown>): void;
+  log(
+    level: LogLevel,
+    message: string,
+    metadata?: Record<string, unknown>,
+  ): void;
 
   // Backward compatibility
   log(message: string): void;

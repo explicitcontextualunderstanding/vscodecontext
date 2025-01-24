@@ -1,5 +1,4 @@
 {
-  "type": "module",
   "name": "vscodecontext",
   "version": "0.8.0",
   "publisher": "explicitcontextualunderstanding",
@@ -14,7 +13,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "explicitcontextualunderstanding.vscodecontext.extractContext",
+        "command": "explicitcontextualunderstanding.vscode-context.extractContext",
         "title": "Extract Context"
       }
     ],
@@ -61,14 +60,14 @@
   },
   "scripts": {
     "build": "npm run lint && tsc",
-    "postbuild": "npm run sonar",
-    "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
-    "lint": "NODE_OPTIONS=--max_old_space_size=4096 eslint . --config eslint.config.mjs && markdownlint '**/*.md' --dot -p .markdownlintignore || true",
+    "sonar": "cross-env npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
+    "lint": "eslint . --fix && prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" --ignore-path .gitignore",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "tsx ./tests/runTest.mjs",
+    "test:e2e": "ts-node ./tests/integration/runTest.ts",
+    "test:all": "npm run test && npm run test:e2e",
     "prepare": "npm run build",
     "docs": "typedoc --out docs src",
     "compile": "rimraf extension/dist && tsc -p ./ && ls extension/dist && cp package.json extension/dist/",
@@ -77,9 +76,9 @@
     "quality": "npm run lint && npm run format && npm run lint:markdown && npm run docs",
     "full-build": "npm run quality && webpack --mode production",
     "watch": "webpack --watch --mode development",
-    "lint:markdown": "markdownlint .",
-    "lint:markdown:verify": "markdownlint . --list-files",
-    "format": "prettier --write src/**/*.ts",
+    "lint:markdown": "markdownlint . --ignore-path .gitignore",
+    "lint:markdown:verify": "markdownlint . --list-files --ignore-path .gitignore",
+    "format": "prettier --write \"src/**/*.ts\" --ignore-path .gitignore",
     "sonar-scan": "node sonar-project.cjs",
     "prebuild": "npm run sonar-scan",
     "clean": "rimraf out coverage *.vsix",
@@ -89,17 +88,16 @@
     "refresh": "npm run purge && npm run rebuild && npm run reinstall"
   },
   "devDependencies": {
-    "@babel/preset-react": "^7.26.3",
+    "@babel/preset-react": "^7.23.3",
     "@types/glob": "^8.1.0",
     "@types/markdownlint": "^0.13.0",
-    "@types/mocha": "^10.0.10",
     "@types/node": "^20.12.7",
-    "@types/react": "^19.0.7",
-    "@types/react-dom": "^19.0.3",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
     "@types/vscode": "^1.96.0",
     "@types/web": "^0.0.197",
-    "@typescript-eslint/eslint-plugin": "^8.21.0",
-    "@typescript-eslint/parser": "^8.21.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "@vitest/coverage-v8": "^3.0.4",
     "@vitest/ui": "^3.0.4",
     "@vscode/test-electron": "^2.3.8",
@@ -108,16 +106,15 @@
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^15.14.0",
     "markdownlint-cli": "^0.43.0",
-    "mocha": "^11.1.0",
     "prettier": "^3.4.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typedoc": "^0.27.6",
     "typescript": "^5.0.4",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.4",
+    "vitest": "^1.2.1",
     "vitest-mock-extended": "^2.0.2",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1",
@@ -125,12 +122,22 @@
     "winston": "3.14.0"
   },
   "dependencies": {
-    "@babel/eslint-parser": "^7.26.5",
+    "@babel/eslint-parser": "^7.23.3",
     "@esbuild-kit/esm-loader": "^2.6.5",
-    "@html-eslint/eslint-plugin": "0.20.0",
-    "@html-eslint/parser": "0.20.0",
-    "preact": "^10.25.4",
+    "@html-eslint/eslint-plugin": "^0.21.1",
+    "@html-eslint/parser": "^0.21.1",
     "quick-lru": "^7.0.0",
-    "tsx": "^4.19.2"
+    "tsx": "^4.7.0",
+    "cross-env": "^7.0.3"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 80,
+    "tabWidth": 2,
+    "semi": true,
+    "bracketSpacing": true,
+    "arrowParens": "always",
+    "endOfLine": "lf"
   }
 }

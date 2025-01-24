@@ -19,6 +19,9 @@ describe('WinstonLogger', () => {
   it('should support structured logging', () => {
     const spy = vi.spyOn(logger, 'info');
     logger.info('User action', { userId: 123, action: 'test' });
-    expect(spy).toHaveBeenCalledWith('User action', { userId: 123, action: 'test' });
+    expect(spy).toHaveBeenCalledWith('User action', {
+      userId: 123,
+      action: 'test',
+    });
   });
 });

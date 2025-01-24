@@ -1,121 +1,102 @@
-import eslint from '@eslint/js';
-import tseslint from '@typescript-eslint/eslint-plugin';
+import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
+import prettier from 'eslint-config-prettier';
 
 export default [
-  // Base configuration
   {
     ignores: [
-      '**/dist/**',
-      '**/node_modules/**',
-      '**/coverage/**',
-      '**/docs/**',
-      '**/*.d.ts',
-      '**/*.min.js',
-      '**/*.html',
+      'dist/**',
       'out/**',
-    ],
+      'coverage/**',
+      '*.config.*',
+      'node_modules/**',
+      '.vscode-test/**',
+      'extension/**',
+      'docs/**'
+    ]
   },
-
-  // Core ESLint recommended rules with environments
+  // TypeScript files
   {
-    ...eslint.configs.recommended,
-    languageOptions: {
-      globals: {
-        console: 'readonly',
-        process: 'readonly',
-        setTimeout: 'readonly',
-      },
-    },
-  },
-
-  // Development logging configuration
-  {
-    files: ['src/developmentLogger.ts'],
-    rules: {
-      'no-console': 'off',
-    },
-  },
-
-  // Test environment configuration
-  {
-    files: ['**/*.test.ts', 'tests/setup.ts'],
-    languageOptions: {
-      globals: {
-        describe: 'readonly',
-        test: 'readonly',
-        it: 'readonly',
-        expect: 'readonly',
-        beforeAll: 'readonly',
-        afterAll: 'readonly',
-        jest: 'readonly',
-        global: 'readonly',
-      },
-    },
-  },
-
-  // TypeScript configuration for source files
-  {
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['**/*.d.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
-        ecmaFeatures: { jsx: true },
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: ['./tsconfig.json', './tests/tsconfig.json', './tests/integration/tsconfig.json']
       },
+      globals: {
+        ...globals.node
+      }
     },
     plugins: {
-      '@typescript-eslint': tseslint,
+      '@typescript-eslint': tsPlugin,
+      prettier: prettierPlugin
     },
     rules: {
-      ...tseslint.configs.recommended.rules,
-      'no-console': 'error',
-      '@typescript-eslint/consistent-type-imports': 'error',
-    },
+      ...tsPlugin.configs.recommended.rules,
+      ...prettier.rules,
+      'prettier/prettier': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-console': ['error', { allow: ['warn', 'error'] }]
+    }
   },
-  // TypeScript configuration for test files
+  // Declaration files
   {
-    files: ['tests/**/*.ts', 'tests/**/*.tsx'],
+    files: ['**/*.d.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tests/tsconfig.json',
-        ecmaFeatures: { jsx: true },
-      },
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      }
     },
     plugins: {
-      '@typescript-eslint': tseslint,
+      prettier: prettierPlugin
     },
     rules: {
-      ...tseslint.configs.recommended.rules,
-      'no-console': 'off',
-      '@typescript-eslint/consistent-type-imports': 'error',
-    },
+      ...prettier.rules,
+      'prettier/prettier': 'error'
+    }
   },
-  // Node.js CommonJS configuration
+  // JavaScript files
   {
-    files: ['webpack.config.cjs'],
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'script',
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: {
-        __dirname: 'readonly',
-        require: 'readonly',
-        module: 'readonly',
-        exports: 'writable',
-        process: 'readonly',
-      },
+        ...globals.node
+      }
     },
-  },
-
-  // Prettier integration
-  {
     plugins: {
-      prettier: prettierPlugin,
+      prettier: prettierPlugin
     },
     rules: {
-      'prettier/prettier': ['error', { usePrettierrc: true }],
-    },
+      ...prettier.rules,
+      'prettier/prettier': 'error'
+    }
   },
+  // Test files
+  {
+    files: ['tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off'
+    }
+  },
+  // Integration test files
+  {
+    files: ['tests/integration/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-var-requires': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off'
+    }
+  }
 ];

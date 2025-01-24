@@ -13,7 +13,9 @@ export class ErrorMonitor {
   };
 
   private constructor() {
-    const channel = vscode.window.createOutputChannel('VSCode Context Error Monitor');
+    const channel = vscode.window.createOutputChannel(
+      'VSCode Context Error Monitor',
+    );
     this.logger = new ErrorLogger(channel);
   }
 
@@ -39,7 +41,10 @@ export class ErrorMonitor {
     this.errorMetrics.clear();
   }
 
-  private updateMetrics(errorCode: string, context?: Record<string, unknown>): ErrorMetrics {
+  private updateMetrics(
+    errorCode: string,
+    context?: Record<string, unknown>,
+  ): ErrorMetrics {
     const currentMetrics = this.errorMetrics.get(errorCode) || {
       count: 0,
       lastOccurrence: new Date(),

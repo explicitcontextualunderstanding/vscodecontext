@@ -31,7 +31,8 @@ export interface ResourceEvent extends ContextEvent<{ id: string }> {
   readonly type: 'resource';
 }
 
-export interface StateChangeEvent extends ContextEvent<{ oldState: string; newState: string }> {
+export interface StateChangeEvent
+  extends ContextEvent<{ oldState: string; newState: string }> {
   readonly type: 'state_change';
 }
 
@@ -44,7 +45,9 @@ export function isResourceEvent(event: ContextEvent): event is ResourceEvent {
   return event.type === 'resource';
 }
 
-export function isStateChangeEvent(event: ContextEvent): event is StateChangeEvent {
+export function isStateChangeEvent(
+  event: ContextEvent,
+): event is StateChangeEvent {
   return event.type === 'state_change';
 }
 

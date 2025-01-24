@@ -5,6 +5,9 @@
  * @returns The result of the async function
  * @throws {ContextProviderError} When operation fails
  */
-export declare function withErrorHandling<T>(fn: () => Promise<T>, metadata: {
+export declare function withErrorHandling<T>(
+  fn: () => Promise<T>,
+  metadata: {
     operation: string;
-}): Promise<T>;
+  },
+): Promise<T>;

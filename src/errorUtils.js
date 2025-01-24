@@ -8,21 +8,21 @@ import { isError, isObjectWithMessage } from './utils/typeGuards';
  * @throws {ContextProviderError} When operation fails
  */
 export async function withErrorHandling(fn, metadata) {
-    try {
-        return await fn();
-    }
-    catch (error) {
-        const getErrorMessage = (err) => {
-            if (isError(err))
-                return err.message;
-            if (typeof err === 'string')
-                return err;
-            if (isObjectWithMessage(err))
-                return err.message;
-            return 'Unknown error occurred';
-        };
-        const message = getErrorMessage(error);
-        throw new ContextProviderError(`Failed during ${metadata.operation}: ${message}`, 'OPERATION_FAILED', metadata.operation);
-    }
+  try {
+    return await fn();
+  } catch (error) {
+    const getErrorMessage = (err) => {
+      if (isError(err)) return err.message;
+      if (typeof err === 'string') return err;
+      if (isObjectWithMessage(err)) return err.message;
+      return 'Unknown error occurred';
+    };
+    const message = getErrorMessage(error);
+    throw new ContextProviderError(
+      `Failed during ${metadata.operation}: ${message}`,
+      'OPERATION_FAILED',
+      metadata.operation,
+    );
+  }
 }
 //# sourceMappingURL=errorUtils.js.map

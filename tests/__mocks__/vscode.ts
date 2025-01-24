@@ -19,7 +19,9 @@ class MockExtensionContext implements vscode.ExtensionContext {
     {} as vscode.LanguageModelAccessInformation;
 
   environmentVariableCollection: vscode.EnvironmentVariableCollection & {
-    getScoped(scope: vscode.EnvironmentVariableScope): vscode.EnvironmentVariableCollection;
+    getScoped(
+      scope: vscode.EnvironmentVariableScope,
+    ): vscode.EnvironmentVariableCollection;
   } = {
     persistent: true,
     description: 'Mock environment variables',
@@ -46,7 +48,9 @@ class MockExtensionContext implements vscode.ExtensionContext {
     },
   };
 
-  globalState: vscode.Memento & { setKeysForSync(keys: readonly string[]): void } = {
+  globalState: vscode.Memento & {
+    setKeysForSync(keys: readonly string[]): void;
+  } = {
     get: () => undefined,
     update: () => Promise.resolve(),
     setKeysForSync: () => undefined,

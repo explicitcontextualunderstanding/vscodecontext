@@ -36,7 +36,10 @@ export interface OutputAdapter {
 
 export class EventAggregator implements OutputAdapter {
   private readonly eventQueue = new Map<ContextEventType, ContextEvent[]>();
-  private readonly strategies = new Map<ContextEventType, AggregationStrategy>();
+  private readonly strategies = new Map<
+    ContextEventType,
+    AggregationStrategy
+  >();
   private flushTimer: ReturnType<typeof globalThis.setInterval> | null = null;
   private readonly outputChannel: vscode.OutputChannel;
   private readonly loadMetrics: LoadMetrics = {
@@ -54,7 +57,8 @@ export class EventAggregator implements OutputAdapter {
     this.eventQueue = new Map();
     this.strategies = new Map();
     this.flushTimer = null;
-    this.outputChannel = outputChannel || vscode.window.createOutputChannel('Event Aggregator');
+    this.outputChannel =
+      outputChannel || vscode.window.createOutputChannel('Event Aggregator');
     this.startFlushTimer();
   }
   // OutputAdapter implementation
@@ -71,7 +75,10 @@ export class EventAggregator implements OutputAdapter {
   /**
    * Registers an aggregation strategy for a specific event type
    */
-  registerStrategy(eventType: ContextEventType, strategy: AggregationStrategy): void {
+  registerStrategy(
+    eventType: ContextEventType,
+    strategy: AggregationStrategy,
+  ): void {
     this.strategies.set(eventType, strategy);
   }
 
@@ -98,7 +105,9 @@ export class EventAggregator implements OutputAdapter {
    * Processes all queued events
    */
   flush(): void {
-    Array.from(this.eventQueue.keys()).forEach((type) => this.flushEventType(type));
+    Array.from(this.eventQueue.keys()).forEach((type) =>
+      this.flushEventType(type),
+    );
   }
 
   /**
@@ -121,7 +130,8 @@ export class EventAggregator implements OutputAdapter {
       processingTime,
     );
     this.loadMetrics.avgProcessingTime =
-      (this.loadMetrics.avgProcessingTime * this.loadMetrics.eventsProcessed + processingTime) /
+      (this.loadMetrics.avgProcessingTime * this.loadMetrics.eventsProcessed +
+        processingTime) /
       (this.loadMetrics.eventsProcessed + 1);
     this.logMetrics(this.loadMetrics);
   }

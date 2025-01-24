@@ -1,17 +1,10 @@
 import * as vscode from 'vscode';
-import type { ErrorMetrics, ErrorPattern } from './types.js';
-
 export class ErrorLogger {
-  constructor(private readonly channel: vscode.OutputChannel) {}
-
-  logError(
-    error: Error,
-    errorCode: string,
-    metrics?: ErrorMetrics,
-    context?: Record<string, unknown>,
-  ): void {
+  constructor(channel) {
+    this.channel = channel;
+  }
+  logError(error, errorCode, metrics, context) {
     const timestamp = new Date().toISOString();
-
     const message = [
       `[${timestamp}] Error Occurrence:`,
       `Code: ${errorCode}`,
@@ -22,19 +15,17 @@ export class ErrorLogger {
     ]
       .filter(Boolean)
       .join('\n');
-
     this.channel.appendLine(message + '\n');
   }
-
-  logPattern(pattern: ErrorPattern): void {
+  logPattern(pattern) {
     const message = `Error Pattern Detected: ${pattern.code} occurred ${pattern.frequency} times in the last ${pattern.timeWindow / 60000} minutes`;
     this.channel.appendLine(message);
     vscode.window.showWarningMessage(message);
   }
-
-  logTelemetry(pattern: ErrorPattern): void {
+  logTelemetry(pattern) {
     this.channel.appendLine(
       `[Telemetry] Pattern detected: ${JSON.stringify(pattern)}`,
     );
   }
 }
+//# sourceMappingURL=errorLogger.js.map

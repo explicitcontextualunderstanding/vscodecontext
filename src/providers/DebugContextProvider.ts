@@ -33,7 +33,9 @@ export class DebugContextProvider implements ContextDataProvider {
       vscode.debug.onDidChangeBreakpoints(this.handleBreakpointChange);
       this.channel.appendLine('DebugContextProvider initialized');
     } catch (error) {
-      this.channel.appendLine(`DebugContextProvider initialization failed: ${error}`);
+      this.channel.appendLine(
+        `DebugContextProvider initialization failed: ${error}`,
+      );
       throw error;
     }
   }
@@ -59,7 +61,9 @@ export class DebugContextProvider implements ContextDataProvider {
     return withErrorHandling(
       () => ({
         activeSession: this.getActiveDebugSession(),
-        allSessions: vscode.debug.activeDebugSession ? this.getAllDebugSessions() : [],
+        allSessions: vscode.debug.activeDebugSession
+          ? this.getAllDebugSessions()
+          : [],
         breakpoints: this.getBreakpoints(),
       }),
       {
@@ -75,7 +79,9 @@ export class DebugContextProvider implements ContextDataProvider {
    * Updates internal tracking and logs the event
    * @param session The newly started debug session
    */
-  private readonly handleDebugSessionStart = (session: vscode.DebugSession): void => {
+  private readonly handleDebugSessionStart = (
+    session: vscode.DebugSession,
+  ): void => {
     try {
       this.channel.appendLine(`Debug session started: ${session.name}`);
     } catch (error) {
@@ -88,7 +94,9 @@ export class DebugContextProvider implements ContextDataProvider {
    * Updates tracking and logs the event
    * @param session The terminated debug session
    */
-  private readonly handleDebugSessionEnd = (session: vscode.DebugSession): void => {
+  private readonly handleDebugSessionEnd = (
+    session: vscode.DebugSession,
+  ): void => {
     try {
       this.channel.appendLine(`Debug session ended: ${session.name}`);
     } catch (error) {
@@ -101,7 +109,9 @@ export class DebugContextProvider implements ContextDataProvider {
    * Logs breakpoint additions, removals, and changes
    * @param event The breakpoint change event
    */
-  private readonly handleBreakpointChange = (event: vscode.BreakpointsChangeEvent): void => {
+  private readonly handleBreakpointChange = (
+    event: vscode.BreakpointsChangeEvent,
+  ): void => {
     try {
       this.channel.appendLine(
         `Breakpoints changed: ${event.added.length} added, ${event.removed.length} removed`,

@@ -43,25 +43,36 @@ function subscribeToEvent(
     return registration();
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    handleError(err, { operation: 'subscribeToEvent', event: eventName }, outputChannel);
+    handleError(
+      err,
+      { operation: 'subscribeToEvent', event: eventName },
+      outputChannel,
+    );
     throw err;
   }
 }
 
-async function handleEditorChange(editor: vscode.TextEditor | undefined): Promise<void> {
+async function handleEditorChange(
+  editor: vscode.TextEditor | undefined,
+): Promise<void> {
   await withErrorHandling(
     async () => {
-      contextProvider.info(`Active editor changed: ${editor?.document.uri.toString()}`, {
-        uri: editor?.document.uri.toString(),
-        language: editor?.document.languageId,
-      });
+      contextProvider.info(
+        `Active editor changed: ${editor?.document.uri.toString()}`,
+        {
+          uri: editor?.document.uri.toString(),
+          language: editor?.document.languageId,
+        },
+      );
     },
     { operation: 'handleEditorChange', uri: editor?.document.uri.toString() },
     outputChannel,
   );
 }
 
-async function handleWindowStateChange(state: vscode.WindowState): Promise<void> {
+async function handleWindowStateChange(
+  state: vscode.WindowState,
+): Promise<void> {
   await withErrorHandling(
     async () => {
       contextProvider.info('Window state changed', {
@@ -100,7 +111,8 @@ async function extractContext(): Promise<void> {
         config.enableCustomEditorsContext ? 'customEditors' : null,
       ].filter(Boolean) as string[];
 
-      const contextData: ContextData = await contextProvider.getAllContext(includeCategories);
+      const contextData: ContextData =
+        await contextProvider.getAllContext(includeCategories);
       outputChannel.clear();
       outputChannel.appendLine('VSCode Context Data:');
       outputChannel.appendLine(JSON.stringify(contextData, null, 2));
@@ -143,7 +155,9 @@ async function handleDebugStart(session: vscode.DebugSession): Promise<void> {
   );
 }
 
-async function handleDebugTerminate(session: vscode.DebugSession): Promise<void> {
+async function handleDebugTerminate(
+  session: vscode.DebugSession,
+): Promise<void> {
   await withErrorHandling(
     async () =>
       contextProvider.info(`Debug session terminated: ${session.name}`, {
@@ -172,22 +186,28 @@ async function registerWebview(
   )) as { provider: WebviewProvider; registration: vscode.Disposable };
 }
 
-export async function activate(context: Readonly<vscode.ExtensionContext>): Promise<void> {
+export async function activate(
+  context: Readonly<vscode.ExtensionContext>,
+): Promise<void> {
   try {
     outputChannel = vscode.window.createOutputChannel('VSCode Context');
 
     await initializeContextProvider();
 
-    const onDidChangeActiveTextEditor = subscribeToEvent('onDidChangeActiveTextEditor', () =>
-      vscode.window.onDidChangeActiveTextEditor(async (editor) => {
-        await handleEditorChange(editor);
-      }),
+    const onDidChangeActiveTextEditor = subscribeToEvent(
+      'onDidChangeActiveTextEditor',
+      () =>
+        vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+          await handleEditorChange(editor);
+        }),
     );
 
-    const onDidChangeWindowState = subscribeToEvent('onDidChangeWindowState', () =>
-      vscode.window.onDidChangeWindowState(async (state) => {
-        await handleWindowStateChange(state);
-      }),
+    const onDidChangeWindowState = subscribeToEvent(
+      'onDidChangeWindowState',
+      () =>
+        vscode.window.onDidChangeWindowState(async (state) => {
+          await handleWindowStateChange(state);
+        }),
     );
 
     const extractContextCommand = vscode.commands.registerCommand(
@@ -211,16 +231,20 @@ export async function activate(context: Readonly<vscode.ExtensionContext>): Prom
       },
     );
 
-    const onDidStartDebugSession = subscribeToEvent('onDidStartDebugSession', () =>
-      vscode.debug.onDidStartDebugSession(async (session) => {
-        await handleDebugStart(session);
-      }),
+    const onDidStartDebugSession = subscribeToEvent(
+      'onDidStartDebugSession',
+      () =>
+        vscode.debug.onDidStartDebugSession(async (session) => {
+          await handleDebugStart(session);
+        }),
     );
 
-    const onDidTerminateDebugSession = subscribeToEvent('onDidTerminateDebugSession', () =>
-      vscode.debug.onDidTerminateDebugSession(async (session) => {
-        await handleDebugTerminate(session);
-      }),
+    const onDidTerminateDebugSession = subscribeToEvent(
+      'onDidTerminateDebugSession',
+      () =>
+        vscode.debug.onDidTerminateDebugSession(async (session) => {
+          await handleDebugTerminate(session);
+        }),
     );
 
     await withErrorHandling(
@@ -266,9 +290,12 @@ export async function deactivate(): Promise<void> {
   await withErrorHandling(
     async () => {
       if (contextProvider) {
-        contextProvider.info(`Extension "${packageName}" is being deactivated`, {
-          timestamp: new Date().toISOString(),
-        });
+        contextProvider.info(
+          `Extension "${packageName}" is being deactivated`,
+          {
+            timestamp: new Date().toISOString(),
+          },
+        );
         contextProvider = null!;
       }
       if (outputChannel) {
