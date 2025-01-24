@@ -1,6 +1,6 @@
 import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events.js';
+import { VSCodeContextError } from '../../errors/VSCodeContextError.js';
 import { Timer, TimeWindow } from './utils/timer.js';
-
 /**
  * Implements a throttle strategy for event aggregation that limits the rate
  * at which events are processed. Only the most recent event within the throttle
@@ -9,7 +9,7 @@ import { Timer, TimeWindow } from './utils/timer.js';
 export class ThrottleStrategy implements AggregationStrategy {
   private readonly timeWindow: TimeWindow;
   private readonly pendingEvents: Array<ContextEvent<unknown>> = [];
-  private emitTimer: Timer | null = null;
+  private emitTimer: Timer | undefined;
 
   constructor(
     private readonly throttleMs: number,
@@ -26,18 +26,26 @@ export class ThrottleStrategy implements AggregationStrategy {
     this.pendingEvents.push(event);
 
     if (this.timeWindow.isExpired()) {
-      await this.emitPendingEvents(emit);
+      try {
+        await this.emitPendingEvents(emit);
+      } catch (e) {
+        throw new VSCodeContextError(
+          `Failed to emit pending events: ${e}`,
+          'EmitPendingEventsError',
+        );
+      }
       return;
     }
 
-    const nextEmitDelay = Math.min(this.timeWindow.getTimeRemaining(), this.maxDelay);
-
     if (!this.emitTimer) {
+      const nextEmitDelay = Math.min(this.timeWindow.getTimeRemaining(), this.maxDelay);
       this.emitTimer = new Timer(() => {
-        void this.emitPendingEvents(emit);
-        this.emitTimer = null;
+        void this.emitPendingEvents(emit).catch((e) => {
+          // eslint-disable-next-line no-console
+          console.error(`Error emitting pending events in timer callback: ${e}`);
+        });
+        this.emitTimer = undefined;
       }, nextEmitDelay);
-      this.emitTimer.start();
     }
   }
 
@@ -57,7 +65,7 @@ export class ThrottleStrategy implements AggregationStrategy {
 
   public cancel(): void {
     this.emitTimer?.stop();
-    this.emitTimer = null;
+    this.emitTimer = undefined;
     this.pendingEvents.length = 0;
   }
 
