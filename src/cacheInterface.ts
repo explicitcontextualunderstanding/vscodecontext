@@ -1,4 +1,4 @@
-import NodeCache from 'node-cache';
+import QuickLRU from 'quick-lru';
 
 /**
  * Represents cached context data with timestamp and key-value pairs
@@ -10,41 +10,115 @@ export interface ContextData {
   data: Record<string, unknown>;
 }
 
-// Cache interface for the vscodecontext extension
+/**
+ * Cache interface for the vscodecontext extension using LRU caching strategy
+ */
 export class ContextCache {
-  private readonly cache: NodeCache;
+  private readonly cache: QuickLRU<string, ContextData>;
+  private readonly metrics = {
+    hits: 0,
+    misses: 0,
+    sets: 0,
+    deletes: 0,
+  };
 
-  constructor(ttlSeconds: number = 3600) {
-    this.cache = new NodeCache({
-      stdTTL: ttlSeconds,
-      checkperiod: ttlSeconds * 0.2,
-      useClones: false,
+  constructor(maxSize: number = 1000) {
+    this.cache = new QuickLRU({
+      maxSize,
+      onEviction: () => {
+        // Handled silently - eviction is expected LRU behavior
+      },
     });
   }
 
-  // Get cached context
+  /**
+   * Get cached context
+   * @param key Cache key
+   * @returns Cached context data or undefined if not found
+   */
   public get(key: string): ContextData | undefined {
-    return this.cache.get(key);
+    const value = this.cache.get(key);
+    if (value) {
+      this.metrics.hits++;
+      return value;
+    }
+    this.metrics.misses++;
+    return undefined;
   }
 
-  // Set context in cache
+  /**
+   * Set context in cache
+   * @param key Cache key
+   * @param value Context data to cache
+   * @returns true if set successfully
+   */
   public set(key: string, value: ContextData): boolean {
-    return this.cache.set(key, value);
+    this.cache.set(key, value);
+    this.metrics.sets++;
+    return true;
   }
 
-  // Delete context from cache
+  /**
+   * Delete context from cache
+   * @param key Cache key
+   * @returns 1 if item was deleted, 0 if item didn't exist
+   */
   public del(key: string): number {
-    return this.cache.del(key);
+    const deleted = this.cache.delete(key);
+    if (deleted) {
+      this.metrics.deletes++;
+      return 1;
+    }
+    return 0;
   }
 
-  // Flush all cached contexts
+  /**
+   * Flush all cached contexts
+   */
   public flush(): void {
-    this.cache.flushAll();
+    this.cache.clear();
+    // Reset metrics on flush
+    Object.assign(this.metrics, {
+      hits: 0,
+      misses: 0,
+      sets: 0,
+      deletes: 0,
+    });
   }
 
-  // Get cache statistics
-  public stats(): NodeCache.Stats {
-    return this.cache.getStats();
+  /**
+   * Get cache statistics
+   * @returns Cache statistics including hits, misses, and size
+   */
+  public stats(): {
+    hits: number;
+    misses: number;
+    sets: number;
+    deletes: number;
+    size: number;
+  } {
+    return {
+      ...this.metrics,
+      size: this.cache.size,
+    };
+  }
+
+  /**
+   * Optional: Peek at a cached value without marking it as recently used
+   * @param key Cache key
+   * @returns Cached context data or undefined if not found
+   */
+  public peek(key: string): ContextData | undefined {
+    return this.cache.peek(key);
+  }
+
+  /**
+   * Optional: Check if a key exists in the cache
+   * @param key Cache key
+   * @returns true if key exists, false otherwise
+   */
+  public has(key: string): boolean {
+    return this.cache.has(key);
   }
 }
 
