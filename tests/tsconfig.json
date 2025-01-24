@@ -1,10 +1,22 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "..",
-    "types": ["node", "jest"],
-    "outDir": "../out"
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node", "vscode", "vitest/globals"],
+    "rootDir": ".",
+    "outDir": "../out/test",
+    "strict": true,
+    "composite": true,
+    "noImplicitAny": false
   },
-  "include": ["./**/*", "../src/**/*"],
-  "exclude": ["node_modules"]
+  "include": [
+    ".",
+    "../src/**/*"
+  ],
+  "references": [
+    {
+      "path": ".."
+    }
+  ]
 }

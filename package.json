@@ -1,7 +1,8 @@
 {
-  "name": "vscode-context",
+  "type": "module",
+  "name": "vscodecontext",
   "version": "0.8.0",
-  "publisher": "rooveterinaryinc",
+  "publisher": "explicitcontextualunderstanding",
   "main": "./extension/dist/extension.js",
   "repository": {
     "type": "git",
@@ -13,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-context.extractContext",
-        "title": "Extract VSCode Context"
+        "command": "explicitcontextualunderstanding.vscodecontext.extractContext",
+        "title": "Extract Context"
       }
     ],
     "configuration": {
@@ -63,7 +64,11 @@
     "postbuild": "npm run sonar",
     "sonar": "npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext",
     "lint": "NODE_OPTIONS=--max_old_space_size=4096 eslint . --config eslint.config.mjs && markdownlint '**/*.md' --dot -p .markdownlintignore || true",
-    "test": "jest",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "tsx ./tests/runTest.mjs",
     "prepare": "npm run build",
     "docs": "typedoc --out docs src",
     "compile": "rimraf extension/dist && tsc -p ./ && ls extension/dist && cp package.json extension/dist/",
@@ -85,8 +90,9 @@
   },
   "devDependencies": {
     "@babel/preset-react": "^7.26.3",
-    "@types/jest": "^29.5.14",
+    "@types/glob": "^8.1.0",
     "@types/markdownlint": "^0.13.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.12.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
@@ -94,22 +100,24 @@
     "@types/web": "^0.0.197",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
+    "@vitest/coverage-v8": "^3.0.4",
+    "@vitest/ui": "^3.0.4",
+    "@vscode/test-electron": "^2.3.8",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^15.14.0",
-    "jest": "^29.7.0",
-    "jest-mock-extended": "^4.0.0-beta1",
     "markdownlint-cli": "^0.43.0",
+    "mocha": "^11.1.0",
     "prettier": "^3.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typedoc": "^0.27.6",
     "typescript": "^5.0.4",
-    "vitest": "^3.0.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.0.4",
     "vitest-mock-extended": "^2.0.2",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1",
@@ -118,9 +126,11 @@
   },
   "dependencies": {
     "@babel/eslint-parser": "^7.26.5",
+    "@esbuild-kit/esm-loader": "^2.6.5",
     "@html-eslint/eslint-plugin": "0.20.0",
     "@html-eslint/parser": "0.20.0",
     "preact": "^10.25.4",
-    "quick-lru": "^7.0.0"
+    "quick-lru": "^7.0.0",
+    "tsx": "^4.19.2"
   }
 }
