@@ -1,4 +1,4 @@
-import type { ContextEvent, ContextEventType } from './events';
+import type { ContextEvent, ContextEventType } from './events.js';
 import * as vscode from 'vscode';
 
 /**
@@ -44,7 +44,7 @@ export class EventAggregator implements OutputAdapter {
     maxProcessingTime: 0,
     avgProcessingTime: 0,
     eventsProcessed: 0,
-    eventsDropped: 0, // eslint-disable-line comma-dangle
+    eventsDropped: 0,
   };
 
   constructor(
@@ -60,10 +60,12 @@ export class EventAggregator implements OutputAdapter {
   // OutputAdapter implementation
   public logEvent(event: ContextEvent): void {
     this.outputChannel.appendLine(`[Event] ${JSON.stringify(event)}`);
+    this.loadMetrics.eventsProcessed++;
   }
 
   public logMetrics(metrics: LoadMetrics): void {
     this.outputChannel.appendLine(`[Metrics] ${JSON.stringify(metrics)}`);
+    this.loadMetrics.queueSize = this.eventQueue.size;
   }
 
   /**
@@ -110,8 +112,18 @@ export class EventAggregator implements OutputAdapter {
    * Processes a single event
    */
   private processEvent(event: ContextEvent): void {
+    const startTime = Date.now();
     this.outputChannel.appendLine(`Processing event: ${event.type}`);
     this.outputChannel.appendLine(JSON.stringify(event, null, 2));
+    const processingTime = Date.now() - startTime;
+    this.loadMetrics.maxProcessingTime = Math.max(
+      this.loadMetrics.maxProcessingTime,
+      processingTime,
+    );
+    this.loadMetrics.avgProcessingTime =
+      (this.loadMetrics.avgProcessingTime * this.loadMetrics.eventsProcessed + processingTime) /
+      (this.loadMetrics.eventsProcessed + 1);
+    this.logMetrics(this.loadMetrics);
   }
 
   /**
