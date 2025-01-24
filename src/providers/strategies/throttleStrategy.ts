@@ -1,4 +1,4 @@
-import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events';
+import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events.js';
 
 /**
  * Implements a throttle strategy for event aggregation that limits the rate
@@ -25,7 +25,7 @@ export class ThrottleStrategy implements AggregationStrategy {
    */
   async process<T>(
     event: ContextEvent<T>,
-    metadata: EventMetadata,
+    _metadata: EventMetadata,
     emit: (events: Array<ContextEvent<unknown>>) => Promise<void>,
   ): Promise<void> {
     const now = Date.now();
@@ -33,7 +33,7 @@ export class ThrottleStrategy implements AggregationStrategy {
 
     // Check if we're within the throttle window
     const timeSinceLastEmit = now - this.lastEmitTime;
-    
+
     // Clear any existing timeout
     if (this.timeoutHandle) {
       globalThis.clearTimeout(this.timeoutHandle);

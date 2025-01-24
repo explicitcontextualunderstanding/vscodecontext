@@ -2,10 +2,9 @@ import * as crypto from 'crypto';
 
 import * as vscode from 'vscode';
 
-import { withErrorHandling } from '../utils/errorUtils';
+import { withErrorHandling } from '../utils/errorUtils.js';
 
 export class WebviewProvider implements vscode.WebviewViewProvider {
-  private _view?: vscode.WebviewView;
   private readonly _extensionUri: vscode.Uri;
   private readonly _outputChannel: vscode.OutputChannel;
 
@@ -15,8 +14,6 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
-    this._view = webviewView;
-
     webviewView.webview.options = {
       // Allow scripts in the webview
       enableScripts: true,
@@ -49,7 +46,7 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Cat Coding</title>
     </head>
