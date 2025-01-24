@@ -23,7 +23,7 @@ export class ConfigurationError extends VSCodeContextError {
  * Context provider related errors
  */
 export class ContextProviderError extends VSCodeContextError {
-    constructor(message, code = 'CONTEXT_PROVIDER_ERROR', operation) {
+    constructor(message, operation, code = 'CONTEXT_PROVIDER_ERROR') {
         super(message, code);
         this.operation = operation;
         this.name = 'ContextProviderError';
