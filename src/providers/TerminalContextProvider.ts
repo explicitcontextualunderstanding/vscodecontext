@@ -60,6 +60,77 @@ export class TerminalContextProvider implements ContextDataProvider {
     }
   }
 
+  /**
+   * Retrieves context information for the currently active terminal
+   * @returns Terminal metadata object including name, creation options,
+   * state, process ID, and shell path, or null if no active terminal
+   */
+  private getActiveTerminalContext(): {
+    name: string;
+    creationOptions: vscode.TerminalOptions | vscode.ExtensionTerminalOptions;
+    state: vscode.TerminalState;
+    processId: string | null;
+    shellPath: string | null;
+  } | null {
+    const activeTerminal = vscode.window.activeTerminal;
+    return activeTerminal ? this.getTerminalMetadata(activeTerminal) : null;
+  }
+
+  /**
+   * Extracts metadata information from a terminal instance
+   * @param terminal The terminal to get metadata from
+   * @returns Object containing terminal metadata:
+   * - name: Terminal display name
+   * - creationOptions: Original options used to create the terminal
+   * - state: Current terminal state
+   * - processId: Process ID of the terminal shell (if available)
+   * - shellPath: Path to the shell executable (if available)
+   */
+  private getTerminalMetadata(terminal: vscode.Terminal): {
+    name: string;
+    creationOptions: vscode.TerminalOptions | vscode.ExtensionTerminalOptions;
+    state: vscode.TerminalState;
+    processId: string | null;
+    shellPath: string | null;
+  } {
+    return {
+      name: terminal.name,
+      creationOptions: terminal.creationOptions,
+      state: terminal.state,
+      processId: terminal.processId !== undefined ? String(terminal.processId) : null, // eslint-disable-line @typescript-eslint/no-base-to-string
+      shellPath: this.getShellPath(terminal),
+    };
+  }
+
+  private getShellPath(terminal: vscode.Terminal): string | null {
+    try {
+      // Handle different terminal types safely
+      const options = terminal.creationOptions;
+      if (options && 'shellPath' in options) {
+        return (options as vscode.TerminalOptions).shellPath ?? null;
+      }
+
+      // Safely access internal properties as last resort
+      // Using precise type assertion for internal VS Code properties
+      interface VSCodeTerminalInternal {
+        _shellPath?: { value: string };
+        _ptyProcess?: { shellPath: string };
+      }
+
+      /* @ts-expect-error - Accessing internal VS Code API */
+      const internalTerm: VSCodeTerminalInternal = terminal;
+
+      const shellPath = internalTerm._shellPath?.value ?? internalTerm._ptyProcess?.shellPath;
+
+      return typeof shellPath === 'string' ? shellPath : null;
+    } catch (error) {
+      this.channel.appendLine(
+        `Error getting shell path: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return null;
+    }
+  }
+
   public async getContext(): Promise<Record<string, unknown>> {
     return {
       terminals: this.terminals.map((t) => ({
