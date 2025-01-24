@@ -1,5 +1,5 @@
 /* global clearTimeout */
-import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events';
+import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events.js';
 
 export class WindowedBatchingStrategy implements AggregationStrategy {
   private buffer: Array<ContextEvent<unknown>> = [];
@@ -12,7 +12,7 @@ export class WindowedBatchingStrategy implements AggregationStrategy {
 
   async process<T>(
     event: ContextEvent<T>,
-    metadata: EventMetadata,
+    _metadata: EventMetadata,
     emit: (events: Array<ContextEvent<unknown>>) => Promise<void>,
   ): Promise<void> {
     this.buffer.push(event);
