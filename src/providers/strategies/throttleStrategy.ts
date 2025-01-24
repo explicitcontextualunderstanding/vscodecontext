@@ -12,7 +12,7 @@ export class ThrottleStrategy implements AggregationStrategy {
   private emitTimer: Timer | null = null;
 
   constructor(
-    private readonly throttleMs: number = 1000,
+    private readonly throttleMs: number,
     private readonly maxDelay: number = 5000,
   ) {
     this.timeWindow = new TimeWindow(throttleMs);
