@@ -21,11 +21,31 @@ export interface AggregationStrategy {
 /**
  * Manages event aggregation and processing
  */
-export class EventAggregator {
-  private readonly eventQueue: Map<ContextEventType, ContextEvent[]>;
-  private readonly strategies: Map<ContextEventType, AggregationStrategy>;
-  private flushTimer: ReturnType<typeof globalThis.setInterval> | null;
+export interface LoadMetrics {
+  queueSize: number;
+  maxProcessingTime: number;
+  avgProcessingTime: number;
+  eventsProcessed: number;
+  eventsDropped: number;
+}
+
+export interface OutputAdapter {
+  logEvent(event: ContextEvent): void;
+  logMetrics(metrics: LoadMetrics): void;
+}
+
+export class EventAggregator implements OutputAdapter {
+  private readonly eventQueue = new Map<ContextEventType, ContextEvent[]>();
+  private readonly strategies = new Map<ContextEventType, AggregationStrategy>();
+  private flushTimer: ReturnType<typeof globalThis.setInterval> | null = null;
   private readonly outputChannel: vscode.OutputChannel;
+  private readonly loadMetrics: LoadMetrics = {
+    queueSize: 0,
+    maxProcessingTime: 0,
+    avgProcessingTime: 0,
+    eventsProcessed: 0,
+    eventsDropped: 0, // eslint-disable-line comma-dangle
+  };
 
   constructor(
     private readonly config: AggregationConfig,
@@ -36,6 +56,14 @@ export class EventAggregator {
     this.flushTimer = null;
     this.outputChannel = outputChannel || vscode.window.createOutputChannel('Event Aggregator');
     this.startFlushTimer();
+  }
+  // OutputAdapter implementation
+  public logEvent(event: ContextEvent): void {
+    this.outputChannel.appendLine(`[Event] ${JSON.stringify(event)}`);
+  }
+
+  public logMetrics(metrics: LoadMetrics): void {
+    this.outputChannel.appendLine(`[Metrics] ${JSON.stringify(metrics)}`);
   }
 
   /**
