@@ -1,5 +1,6 @@
 import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events.js';
 import { VSCodeContextError } from '../../errors/VSCodeContextError.js';
+import { errorLogger } from '../../monitoring/errorLogger.js';
 import { Timer, TimeWindow } from './utils/timer.js';
 /**
  * Implements a throttle strategy for event aggregation that limits the rate
@@ -41,8 +42,7 @@ export class ThrottleStrategy implements AggregationStrategy {
       const nextEmitDelay = Math.min(this.timeWindow.getTimeRemaining(), this.maxDelay);
       this.emitTimer = new Timer(() => {
         void this.emitPendingEvents(emit).catch((e) => {
-          // eslint-disable-next-line no-console
-          console.error(`Error emitting pending events in timer callback: ${e}`);
+          errorLogger.logError('ThrottleStrategyTimerError', e);
         });
         this.emitTimer = undefined;
       }, nextEmitDelay);
