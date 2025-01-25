@@ -1,7 +1,9 @@
 out/
 coverage/
 node_modules/
-.vscode/
+.vscode/*       # Ignore all files inside .vscode directory
+!.vscode/tasks.json   # BUT, explicitly include tasks.json
+!.vscode/settings.json # AND explicitly include settings.json (optional, if you want to share project settings)
 .idea/
 *.map
 *.vsix
@@ -11,5 +13,6 @@ dist/
 .aider.*
 .sonar/
 docs/
+!docs/tasks.md
 vscodecontext.json
 .vscode-test/

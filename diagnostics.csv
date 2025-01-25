@@ -1,0 +1,2 @@
+file|error code|error message|start line|start char|end line|end char|target
+extension/extension.ts|typescript:S1186|Unexpected empty function 'deactivate'.|29|29|29|31|undefined

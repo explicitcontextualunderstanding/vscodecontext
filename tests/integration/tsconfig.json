@@ -19,12 +19,6 @@
       "*": ["*", "*.js"]
     }
   },
-  "include": [
-    "**/*",
-    "../../package.json"
-  ],
-  "exclude": [
-    "node_modules",
-    ".vscode-test"
-  ]
+  "include": ["**/*", "../../package.json"],
+  "exclude": ["node_modules", ".vscode-test"]
 }

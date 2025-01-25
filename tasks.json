@@ -1,0 +1,240 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build: Production",
+      "command": "npm",
+      "args": ["run", "build"],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": {
+        "echo": false,
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Build: Development",
+      "command": "npm",
+      "args": ["run", "build:dev"],
+      "group": { "kind": "build" },
+      "presentation": {
+        "echo": false,
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Build: Development (Debug)",
+      "command": "npm",
+      "args": ["run", "build:debug"],
+      "group": { "kind": "build" },
+      "presentation": {
+        "echo": false,
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Watch: Development",
+      "command": "npm",
+      "args": ["run", "watch"],
+      "group": { "kind": "build" },
+      "presentation": {
+        "echo": false,
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Test: Unit",
+      "command": "npm",
+      "args": ["run", "test"],
+      "group": { "kind": "test" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$vitest"]
+    },
+    {
+      "label": "Test: End-to-End",
+      "command": "npm",
+      "args": ["run", "test:e2e"],
+      "group": { "kind": "test" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$vitest"]
+    },
+    {
+      "label": "Test: Watch",
+      "command": "npm",
+      "args": ["run", "test:watch"],
+      "group": { "kind": "test" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$vitest"]
+    },
+    {
+      "label": "Test: UI",
+      "command": "npm",
+      "args": ["run", "test:ui"],
+      "group": { "kind": "test" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$vitest"]
+    },
+    {
+      "label": "Test: Coverage",
+      "command": "npm",
+      "args": ["run", "test:coverage"],
+      "group": { "kind": "test" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$vitest"]
+    },
+    {
+      "label": "Test: All",
+      "command": "npm",
+      "args": ["run", "test:all"],
+      "group": { "kind": "test" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$vitest"]
+    },
+    {
+      "label": "Lint: TypeScript",
+      "command": "npm",
+      "args": ["run", "lint"],
+      "group": { "kind": "lint" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$eslint-compact"]
+    },
+    {
+      "label": "Format: Check",
+      "command": "npm",
+      "args": ["run", "format:check"],
+      "group": { "kind": "format" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Format: Write",
+      "command": "npm",
+      "args": ["run", "format"],
+      "group": { "kind": "format" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Lint: Markdown",
+      "command": "npm",
+      "args": ["run", "lint:markdown"],
+      "group": { "kind": "lint" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Type Check",
+      "command": "npm",
+      "args": ["run", "type-check"],
+      "group": { "kind": "typecheck" },
+      "presentation": {
+        "echo": false,
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Type Check: Strict",
+      "command": "npm",
+      "args": ["run", "type-check:strict"],
+      "group": { "kind": "typecheck" },
+      "presentation": {
+        "echo": false,
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Type Check: Watch",
+      "command": "npm",
+      "args": ["run", "type-check:watch"],
+      "group": { "kind": "typecheck" },
+      "presentation": {
+        "echo": false,
+        "reveal": "never"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Validate Project",
+      "command": "npm",
+      "args": ["run", "validate"],
+      "group": { "kind": "validate", "isDefault": false },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      },
+      "problemMatcher": ["$eslint-compact", "$tsc", "$vitest"]
+    },
+    {
+      "label": "Clean Project",
+      "command": "npm",
+      "args": ["run", "clean"],
+      "group": { "kind": "clean" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Reinstall Extension",
+      "command": "npm",
+      "args": ["run", "reinstall"],
+      "group": { "kind": "reinstall" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Refresh Extension",
+      "command": "npm",
+      "args": ["run", "refresh"],
+      "group": { "kind": "refresh" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Setup Project",
+      "command": "npm",
+      "args": ["run", "setup"],
+      "group": { "kind": "setup" },
+      "presentation": {
+        "echo": false,
+        "reveal": "silent"
+      }
+    }
+  ]
+}

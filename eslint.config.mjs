@@ -14,8 +14,8 @@ export default [
       'node_modules/**',
       '.vscode-test/**',
       'extension/**',
-      'docs/**'
-    ]
+      'docs/**',
+    ],
   },
   // TypeScript files
   {
@@ -26,15 +26,19 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: ['./tsconfig.json', './tests/tsconfig.json', './tests/integration/tsconfig.json']
+        project: [
+          './tsconfig.json',
+          './tests/tsconfig.json',
+          './tests/integration/tsconfig.json',
+        ],
       },
       globals: {
-        ...globals.node
-      }
+        ...globals.node,
+      },
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      prettier: prettierPlugin
+      prettier: prettierPlugin,
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
@@ -42,9 +46,12 @@ export default [
       'prettier/prettier': 'error',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      'no-console': ['error', { allow: ['warn', 'error'] }]
-    }
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' },
+      ],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
   },
   // Declaration files
   {
@@ -53,16 +60,16 @@ export default [
       parser: tsParser,
       parserOptions: {
         ecmaVersion: 'latest',
-        sourceType: 'module'
-      }
+        sourceType: 'module',
+      },
     },
     plugins: {
-      prettier: prettierPlugin
+      prettier: prettierPlugin,
     },
     rules: {
       ...prettier.rules,
-      'prettier/prettier': 'error'
-    }
+      'prettier/prettier': 'error',
+    },
   },
   // JavaScript files
   {
@@ -71,24 +78,24 @@ export default [
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
-        ...globals.node
-      }
+        ...globals.node,
+      },
     },
     plugins: {
-      prettier: prettierPlugin
+      prettier: prettierPlugin,
     },
     rules: {
       ...prettier.rules,
-      'prettier/prettier': 'error'
-    }
+      'prettier/prettier': 'error',
+    },
   },
   // Test files
   {
     files: ['tests/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
-      'no-console': 'off'
-    }
+      'no-console': 'off',
+    },
   },
   // Integration test files
   {
@@ -96,7 +103,7 @@ export default [
     rules: {
       '@typescript-eslint/no-var-requires': 'off',
       '@typescript-eslint/no-require-imports': 'off',
-      'no-undef': 'off'
-    }
-  }
+      'no-undef': 'off',
+    },
+  },
 ];

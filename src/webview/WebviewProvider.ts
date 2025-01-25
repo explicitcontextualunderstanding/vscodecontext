@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 
 import * as vscode from 'vscode';
 
-import { withErrorHandling } from '../utils/errorUtils.js';
+import { withErrorHandling } from '../utils/errorUtils';
 
 export class WebviewProvider implements vscode.WebviewViewProvider {
   private readonly _extensionUri: vscode.Uri;

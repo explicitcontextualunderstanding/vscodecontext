@@ -1,9 +1,27 @@
 import * as vscode from 'vscode';
 import { getConfig } from '../config';
 
-import type { ContextDataProvider } from '../interfaces/IContextProvider';
-import { ContextCategory } from '../interfaces/IContextProvider';
+import type { IContextProvider } from '../interfaces/IContextProvider'; // Correct import to IContextProvider
+import { ContextCategory } from './contextContracts';
 import { withErrorHandling } from '../utils/errorUtils';
+import type { ContextProviderConfig } from './contextContracts'; // Import ContextProviderConfig
+import type { ContextData } from '@/contextProvider'; // Import ContextData
+
+/**
+ * Defines the structure for Workspace context data.
+ */
+export type WorkspaceContext = {
+  // Export WorkspaceContext type
+  workspaceFolders: Array<{ name: string; uri: string }> | undefined;
+  configuration: {
+    settings: {
+      editor: vscode.WorkspaceConfiguration;
+      files: vscode.WorkspaceConfiguration;
+      search: vscode.WorkspaceConfiguration;
+    };
+    extensions: Array<{ id: string; packageJSON: unknown }>;
+  };
+};
 
 /**
  * Provides context information about the VS Code workspace.
@@ -15,9 +33,11 @@ import { withErrorHandling } from '../utils/errorUtils';
  * Part of the Configurable Context Providers pattern, this provider
  * can be enabled/disabled through VS Code settings.
  */
-export class WorkspaceContextProvider implements ContextDataProvider {
+export class WorkspaceContextProvider implements IContextProvider {
+  // Implement IContextProvider
   /** Identifies this provider's context category */
   readonly category = ContextCategory.Workspace;
+  config!: ContextProviderConfig;
 
   /**
    * Creates a new WorkspaceContextProvider
@@ -41,16 +61,19 @@ export class WorkspaceContextProvider implements ContextDataProvider {
    * - workspaceFolders: Information about opened workspace folders
    * - configuration: Workspace settings and extension information
    */
-  async getContext(): Promise<Record<string, unknown>> {
+  async getContext(): Promise<ContextData> {
+    // Change return type to Promise<ContextData>
     return withErrorHandling(
       () => ({
-        workspaceFolders: vscode.workspace.workspaceFolders?.map((folder) => ({
-          name: folder.name,
-          uri: folder.uri.toString(),
-        })),
-        configuration: {
-          settings: this.getWorkspaceSettings(),
-          extensions: this.getWorkspaceExtensions(),
+        workspace: {
+          // Wrap WorkspaceContext in 'workspace' property
+          workspaceFolders: vscode.workspace.workspaceFolders?.map(
+            (folder) => ({
+              name: folder.name,
+              uri: folder.uri.toString(),
+            }),
+          ),
+          configuration: this.getWorkspaceConfiguration(),
         },
       }),
       {
@@ -58,18 +81,17 @@ export class WorkspaceContextProvider implements ContextDataProvider {
         category: this.category,
       },
       this.channel,
-    );
+    ) as Promise<ContextData>; // Type assertion to ContextData
   }
 
-  private getWorkspaceSettings(): {
-    editor: vscode.WorkspaceConfiguration;
-    files: vscode.WorkspaceConfiguration;
-    search: vscode.WorkspaceConfiguration;
-  } {
+  private getWorkspaceConfiguration(): WorkspaceContext['configuration'] {
     return {
-      editor: vscode.workspace.getConfiguration('editor'),
-      files: vscode.workspace.getConfiguration('files'),
-      search: vscode.workspace.getConfiguration('search'),
+      settings: {
+        editor: vscode.workspace.getConfiguration('editor'),
+        files: vscode.workspace.getConfiguration('files'),
+        search: vscode.workspace.getConfiguration('search'),
+      },
+      extensions: this.getWorkspaceExtensions(),
     };
   }
 
@@ -81,5 +103,21 @@ export class WorkspaceContextProvider implements ContextDataProvider {
       id: ext.id,
       packageJSON: ext.packageJSON as unknown,
     }));
+  }
+  configure(config: ContextProviderConfig): void {
+    // Implement configure method
+    this.config = config;
+  }
+  initialize(): Promise<void> {
+    // Implement initialize method
+    return Promise.resolve();
+  }
+  triggerContextExtraction(): void {
+    // Implement triggerContextExtraction method
+    // No implementation needed for WorkspaceContextProvider
+  }
+  async getAllContext(_categories: string[]): Promise<ContextData> {
+    // Implement getAllContext method
+    return this.getContext();
   }
 }

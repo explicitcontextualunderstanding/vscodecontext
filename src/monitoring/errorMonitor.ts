@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { VSCodeContextError } from '../errors/VSCodeContextError.js';
-import { ErrorLogger } from './errorLogger.js';
-import type { ErrorMetrics, ErrorPattern } from './types.js';
+import { VSCodeContextError } from '../errors/VSCodeContextError';
+import { ErrorLogger } from './errorLogger';
+import type { ErrorMetrics, ErrorPattern } from './types';
 
 export class ErrorMonitor {
   private static instance: ErrorMonitor;

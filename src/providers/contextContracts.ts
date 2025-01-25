@@ -1,3 +1,15 @@
+/**
+ * Represents the configuration for a context provider.
+ */
+export type ContextProviderConfig = {
+  enabled: boolean;
+  refreshInterval?: number;
+  cacheTimeout?: number;
+};
+
+/**
+ * Represents the available context categories.
+ */
 export enum ContextCategory {
   Editor = 'Editor',
   Terminal = 'Terminal',
@@ -5,10 +17,5 @@ export enum ContextCategory {
   Debug = 'Debug',
   SCM = 'SCM',
   Tasks = 'Tasks',
-}
-
-export interface ContextDataProvider {
-  category: ContextCategory;
-  isEnabled(): boolean;
-  getContext(): Promise<unknown>;
+  ExtensionHost = 'ExtensionHost',
 }

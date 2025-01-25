@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { VSCodeContextError } from '../errors/VSCodeContextError';
-import type { ContextCategory } from '../interfaces/IContextProvider';
+import type { ContextCategory } from '../providers/contextContracts';
 import { errorMonitor } from '../monitoring/errorMonitor';
 
 export interface ErrorMetadata {
@@ -14,7 +14,7 @@ export interface ErrorMetadata {
 export function withErrorHandling<T>(
   fn: () => T | Promise<T>,
   metadata: ErrorMetadata,
-  channel: vscode.OutputChannel,
+  channel?: vscode.OutputChannel, // Made channel parameter optional
 ): Promise<T> {
   try {
     const result = fn();
@@ -39,7 +39,7 @@ function isErrorWithMessage(error: unknown): error is Error {
 export function handleError(
   error: unknown,
   metadata: ErrorMetadata,
-  channel: vscode.OutputChannel,
+  channel?: vscode.OutputChannel, // Made channel parameter optional here as well
 ): void {
   const timestamp = new Date().toISOString();
   const contextStr = metadata.context
@@ -54,10 +54,13 @@ export function handleError(
   fullMessage += err.message;
   stack = err.stack ?? 'No stack trace available';
 
-  channel.appendLine(fullMessage);
-  channel.appendLine(stack ?? 'No stack trace available');
-  if (contextStr) {
-    channel.appendLine(contextStr);
+  if (channel) {
+    // Check if channel is defined before using it
+    channel.appendLine(fullMessage);
+    channel.appendLine(stack ?? 'No stack trace available');
+    if (contextStr) {
+      channel.appendLine(contextStr);
+    }
   }
   // Convert to Error instance if needed
   const trackedError = isErrorWithMessage(error)

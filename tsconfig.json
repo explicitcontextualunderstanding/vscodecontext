@@ -1,38 +1,34 @@
 {
   "compilerOptions": {
     "composite": true,
-    "module": "commonjs",
+    "module": "ESNext",
     "target": "ES2022",
     "lib": ["ES2022"],
     "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "rootDir": ".",
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
-    "types": ["node", "vscode", "vitest"],
-    "outDir": "./dist",
+    "types": ["node", "vscode"],
+    "outDir": "extension/dist",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "baseUrl": ".",
+    "baseUrl": "src",
+    "verbatimModuleSyntax": true,
     "paths": {
-      "*": ["*", "*.js"]
+      "@/*": ["*"],
+      "#/*": ["./*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "package.json"
-  ],
-  "exclude": [
-    "node_modules",
-    ".vscode-test",
-    "tests",
-    "dist"
-  ]
+  "include": ["src/**/*", "package.json"],
+  "exclude": ["node_modules", ".vscode-test", "tests"]
 }

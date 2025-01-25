@@ -1,11 +1,17 @@
+import * as vscode from 'vscode';
 import type {
   AggregationStrategy,
   ContextEvent,
   EventMetadata,
 } from '../events.js';
 import { VSCodeContextError } from '../../errors/VSCodeContextError.js';
-// import { ErrorLogger } from '../../monitoring/errorLogger.js';
-// const errorLogger = new ErrorLogger({ appendLine: (message: string) => console.error(message) } as any); // Mock OutputChannel
+import { ErrorLogger } from '../../monitoring/errorLogger.js';
+
+const outputChannel = vscode.window.createOutputChannel(
+  'VSCode Context Throttle',
+);
+const errorLogger = new ErrorLogger(outputChannel);
+
 import { Timer, TimeWindow } from './utils/timer.js';
 /**
  * Implements a throttle strategy for event aggregation that limits the rate
@@ -51,8 +57,11 @@ export class ThrottleStrategy implements AggregationStrategy {
       this.emitTimer = new Timer(() => {
         void this.emitPendingEvents(emit).catch((e) => {
           // eslint-disable-next-line no-console
-          console.error(`Error emitting pending events in timer callback: ${e}`);
-          errorLogger.logError('ThrottleStrategyTimerError', e);
+          console.error(
+            `Error emitting pending events in timer callback: ${e}`,
+          );
+          const error = e instanceof Error ? e : new Error(String(e));
+          errorLogger.logError(error, 'ThrottleStrategyTimerError');
         });
         this.emitTimer = undefined;
       }, nextEmitDelay);

@@ -1,100 +1,144 @@
 import * as vscode from 'vscode';
-import type { ContextDataProvider } from '../interfaces/IContextProvider';
-import { ContextCategory } from '../interfaces/IContextProvider';
 import { getConfig } from '../config';
 
+import type { IContextProvider } from '../interfaces/IContextProvider';
+import { ContextCategory } from '../providers/contextContracts';
+import type { ContextProviderConfig } from './contextContracts';
+import type { ContextData } from '@/contextProvider';
+import { EventAggregator } from './eventAggregator';
+import { withErrorHandling } from '../utils/errorUtils';
+import type { ContextEventType } from './events';
+
 /**
- * Manages and provides context information about VS Code integrated terminals.
- * This provider tracks:
- * - Terminal creation and deletion
- * - Active terminal information
- * - Terminal metadata (name, process ID, shell path)
- * - Terminal state changes
- *
- * Part of the Configurable Context Providers pattern, this provider
- * can be enabled/disabled through VS Code settings.
+ * Defines the structure for Terminal context data.
  */
-export class TerminalContextProvider implements ContextDataProvider {
-  /** Identifies this provider's context category */
+export type TerminalContext = {
+  terminalCount: number;
+  activeTerminalTitle: string | undefined;
+  terminalTitles: string[];
+};
+
+/**
+ * Provides context information about VS Code terminals.
+ * This provider gathers:
+ * - Number of terminals opened
+ * - Titles of all opened terminals
+ * - Title of the active terminal
+ *
+ * Part of the Configurable Context Providers pattern,
+ * this provider can be enabled/disabled via VS Code settings.
+ */
+export class TerminalContextProvider implements IContextProvider {
   readonly category = ContextCategory.Terminal;
-  /** Maintains list of all active terminals */
-  private readonly terminals: {
-    terminal: vscode.Terminal;
-    creationTime: Date;
-    lastActivity: Date;
-    inputCount: number;
-    outputCount: number;
-    totalLifetime: number;
-  }[] = [];
+  config!: ContextProviderConfig;
 
-  constructor() {
-    vscode.window.onDidOpenTerminal(this.onDidOpenTerminal, this);
-    vscode.window.onDidCloseTerminal(this.onDidCloseTerminal, this);
-    vscode.window.onDidChangeActiveTerminal(
-      this.onDidChangeActiveTerminal,
-      this,
-    );
-  }
-
-  private onDidOpenTerminal(terminal: vscode.Terminal): void {
-    this.terminals.push({
-      terminal,
-      creationTime: new Date(),
-      lastActivity: new Date(),
-      inputCount: 0,
-      outputCount: 0,
-      totalLifetime: 0,
-    });
-  }
-
-  private onDidCloseTerminal(terminal: vscode.Terminal): void {
-    const index = this.terminals.findIndex((t) => t.terminal === terminal);
-    if (index !== -1) {
-      this.terminals.splice(index, 1);
-    }
-  }
-
-  private onDidChangeActiveTerminal(
-    terminal: vscode.Terminal | undefined,
-  ): void {
-    if (terminal) {
-      const terminalData = this.terminals.find((t) => t.terminal === terminal);
-      if (terminalData) {
-        terminalData.lastActivity = new Date();
-      }
-    }
-  }
-
-  public async getContext(): Promise<Record<string, unknown>> {
-    return {
-      terminals: this.terminals.map((t) => ({
-        name: t.terminal.name,
-        creationTime: t.creationTime.toISOString(),
-        lastActivity: t.lastActivity.toISOString(),
-        inputCount: t.inputCount,
-        outputCount: t.outputCount,
-        totalLifetime: Date.now() - t.creationTime.getTime(),
-      })),
-    };
-  }
-
-  public getTerminalData(): {
-    terminal: vscode.Terminal;
-    creationTime: Date;
-    lastActivity: Date;
-    inputCount: number;
-    outputCount: number;
-    totalLifetime: number;
-  }[] {
-    return this.terminals;
+  constructor(private readonly eventAggregator: EventAggregator) {
+    vscode.window.onDidOpenTerminal(this.handleTerminalOpen);
+    vscode.window.onDidCloseTerminal(this.handleTerminalClose);
+    vscode.window.onDidChangeActiveTerminal(this.handleActiveTerminalChange);
   }
 
   /**
-   * Checks if terminal context gathering is enabled in settings
-   * @returns true if terminal context gathering is enabled
+   * Checks if this provider is enabled in VS Code settings
    */
-  public isEnabled(): boolean {
+  isEnabled(): boolean {
     const config = getConfig().categories;
     return config.enableTerminalContext;
+  }
+
+  /**
+   * Gathers current terminals context information
+   */
+  async getContext(): Promise<ContextData> {
+    return withErrorHandling(
+      () => ({
+        terminal: {
+          terminalCount: vscode.window.terminals.length,
+          activeTerminalTitle: vscode.window.activeTerminal?.name,
+          terminalTitles: vscode.window.terminals.map((term) => term.name),
+        },
+      }),
+      {
+        operation: 'getTerminalContext',
+        category: this.category,
+      },
+      // Passing no output channel (now optional in withErrorHandling)
+      undefined,
+    ) as Promise<ContextData>;
+  }
+
+  /**
+   * Handles terminal open events to update context
+   */
+  private readonly handleTerminalOpen = (terminal: vscode.Terminal): void => {
+    this.eventAggregator.queueEvent({
+      type: 'state_change' satisfies ContextEventType,
+      payload: { event: 'terminalOpened', terminalName: terminal.name },
+      metadata: {
+        priority: 'low',
+        source: 'TerminalContextProvider',
+        timestamp: Date.now(),
+      },
+    });
+  };
+
+  /**
+   * Handles terminal close events to update context
+   */
+  private readonly handleTerminalClose = (terminal: vscode.Terminal): void => {
+    this.eventAggregator.queueEvent({
+      type: 'state_change' satisfies ContextEventType,
+      payload: { event: 'terminalClosed', terminalName: terminal.name },
+      metadata: {
+        priority: 'low',
+        source: 'TerminalContextProvider',
+        timestamp: Date.now(),
+      },
+    });
+  };
+
+  /**
+   * Handles active terminal change events to update context
+   */
+  private readonly handleActiveTerminalChange = (
+    terminal: vscode.Terminal | undefined,
+  ): void => {
+    this.eventAggregator.queueEvent({
+      type: 'state_change' satisfies ContextEventType,
+      payload: {
+        event: 'activeTerminalChanged',
+        terminalName: terminal?.name,
+      },
+      metadata: {
+        priority: 'low',
+        source: 'TerminalContextProvider',
+        timestamp: Date.now(),
+      },
+    });
+  };
+
+  configure(config: ContextProviderConfig): void {
+    this.config = config;
+  }
+
+  initialize(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  triggerContextExtraction(): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change' satisfies ContextEventType,
+      payload: { event: 'manualContextExtractionRequest' },
+      metadata: {
+        priority: 'low',
+        source: 'TerminalContextProvider',
+        timestamp: Date.now(),
+      },
+    });
+  }
+
+  // Rename 'categories' -> '_categories' so ESLint doesn't complain about unused variable
+  async getAllContext(_categories: string[]): Promise<ContextData> {
+    return this.getContext();
   }
 }
