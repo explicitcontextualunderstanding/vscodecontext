@@ -11,7 +11,7 @@ export class ErrorLogger {
     context?: Record<string, unknown>,
   ): void {
     const timestamp = new Date().toISOString();
-    
+
     const message = [
       `[${timestamp}] Error Occurrence:`,
       `Code: ${errorCode}`,
@@ -33,6 +33,8 @@ export class ErrorLogger {
   }
 
   logTelemetry(pattern: ErrorPattern): void {
-    this.channel.appendLine(`[Telemetry] Pattern detected: ${JSON.stringify(pattern)}`);
+    this.channel.appendLine(
+      `[Telemetry] Pattern detected: ${JSON.stringify(pattern)}`,
+    );
   }
 }

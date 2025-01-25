@@ -15,7 +15,7 @@ async function run() {
 
   const files = await glob('**/**.test.js', {
     cwd: __dirname,
-    ignore: ['**/node_modules/**']
+    ignore: ['**/node_modules/**'],
   });
 
   files.found.forEach((f) => mocha.addFile(path.resolve(__dirname, f)));

@@ -1,195 +1,98 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as vscode from 'vscode';
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { mock } from 'vitest-mock-extended';
 import { ContextProvider } from '../src/contextProvider';
-import { ContextCategory, type ContextDataProvider } from '../src/interfaces/IContextProvider';
+
+// Interface for accessing private members in tests
+interface TestableContextProvider extends ContextProvider {
+  providers: Map<string, { getContext: () => Promise<unknown> }>;
+  debug: (message: string, data: Record<string, unknown>) => void;
+}
 
 describe('ContextProvider', () => {
-  let contextProvider: ContextProvider;
-  let mockExtensionContext: vscode.ExtensionContext;
-  let mockOutputChannel: vscode.OutputChannel; // Mock OutputChannel
-  let mockWorkspaceProvider: ContextDataProvider;
-  let mockEditorProvider: ContextDataProvider;
-  let mockTerminalProvider: ContextDataProvider;
+  let outputChannel: vscode.OutputChannel;
+  let contextProvider: TestableContextProvider;
 
   beforeEach(() => {
-    // Mock VS Code extension context
-    mockExtensionContext = mock<vscode.ExtensionContext>();
-    mockOutputChannel = mock<vscode.OutputChannel>(); // Initialize mockOutputChannel
+    outputChannel = {
+      appendLine: vi.fn(),
+      clear: vi.fn(),
+      show: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as vscode.OutputChannel;
 
-    // Create mock providers
-    mockWorkspaceProvider = {
-      getContext: vi.fn().mockResolvedValue({
-        workspaceFolders: [{ name: 'test', path: '/test' }],
-      }),
-    };
+    contextProvider = new ContextProvider(
+      outputChannel,
+    ) as TestableContextProvider;
+  });
 
-    mockEditorProvider = {
-      getContext: vi.fn().mockResolvedValue({
-        activeDocument: {
-          uri: 'file:///test.ts',
-          languageId: 'typescript',
-        },
-      }),
-    };
-
-    mockTerminalProvider = {
-      getContext: vi.fn().mockResolvedValue({
-        terminals: [
+  describe('getAllContext', () => {
+    it('should aggregate context from all providers', async () => {
+      contextProvider.providers = new Map([
+        [
+          'Editor',
           {
-            name: 'test',
-            state: 'active',
+            getContext: vi.fn().mockResolvedValue({
+              activeTextEditor: null,
+              selections: [],
+              visibleTextEditors: [],
+            }),
           },
         ],
-      }),
-    };
+        [
+          'Terminal',
+          {
+            getContext: vi.fn().mockResolvedValue({
+              activeTerminal: null,
+              allTerminals: [],
+            }),
+          },
+        ],
+      ]);
 
-    // Initialize context provider with mockOutputChannel
-    contextProvider = new ContextProvider(mockOutputChannel);
-  });
-
-  describe('Provider Registration', () => {
-    it('should successfully register providers', () => {
-      // contextProvider.registerProvider is not a function
-      // contextProvider.registerProvider(mockWorkspaceProvider);
-      // contextProvider.registerProvider(mockEditorProvider);
-      // contextProvider.registerProvider(mockTerminalProvider);
-
-      // Test registration by getting context
-      return contextProvider.getAllContext(['workspace', 'editor', 'terminal']).then((context) => {
-        expect(context).toHaveProperty('workspace');
-        expect(context).toHaveProperty('editor');
-        expect(context).toHaveProperty('terminal');
-      });
-    });
-  });
-
-  describe('Context Gathering', () => {
-    beforeEach(() => {
-      // contextProvider.registerProvider is not a function
-      // contextProvider.registerProvider(mockWorkspaceProvider);
-      // contextProvider.registerProvider(mockEditorProvider);
-      // contextProvider.registerProvider(mockTerminalProvider);
+      const context = await contextProvider.getAllContext([
+        'Editor',
+        'Terminal',
+      ]);
+      expect(context).toBeDefined();
+      expect(context).toHaveProperty('Editor');
+      expect(context).toHaveProperty('Terminal');
     });
 
-    it('should gather context only from enabled providers', async () => {
-      // (mockEditorProvider.isEnabled as Mock).mockReturnValue(false); // Property 'isEnabled' does not exist on type 'ContextDataProvider'
-
-      const context = await contextProvider.getAllContext(['workspace', 'editor', 'terminal']);
-
-      expect(context).toHaveProperty('workspace');
-      expect(context).not.toHaveProperty('editor');
-      expect(context).toHaveProperty('terminal');
+    it('should handle empty category list', async () => {
+      const context = await contextProvider.getAllContext([]);
+      expect(context).toEqual({});
     });
 
-    it('should gather context only for requested categories', async () => {
-      const context = await contextProvider.getAllContext(['workspace']);
-
-      expect(context).toHaveProperty('workspace');
-      expect(context).not.toHaveProperty('editor');
-      expect(context).not.toHaveProperty('terminal');
-    });
-
-    it('should handle provider errors gracefully', async () => {
-      (mockWorkspaceProvider.getContext as Mock).mockRejectedValue(new Error('Test error'));
-
-      const context = await contextProvider.getAllContext(['workspace', 'editor']);
-
-      expect(context).not.toHaveProperty('workspace');
-      expect(context).toHaveProperty('editor');
-    });
-  });
-
-  describe('Error Handling', () => {
-    beforeEach(() => {
-      // contextProvider.registerProvider is not a function
-      // contextProvider.registerProvider(mockWorkspaceProvider);
-    });
-
-    it('should handle provider throwing error', async () => {
-      const error = new Error('Provider error');
-      (mockWorkspaceProvider.getContext as Mock).mockRejectedValue(error);
-
-      const context = await contextProvider.getAllContext(['workspace']);
+    it('should handle invalid categories', async () => {
+      const context = await contextProvider.getAllContext(['InvalidCategory']);
       expect(context).toEqual({});
     });
   });
 
-  describe('Provider Configuration Validation', () => {
-    it('should detect invalid provider category', () => {
-      const invalidProvider = {
-        getContext: () => Promise.resolve({}), // Property 'getContext' does not exist on type 'ContextDataProvider'.
+  describe('error handling', () => {
+    it('should handle provider errors gracefully', async () => {
+      const errorProvider = {
+        getContext: vi.fn().mockRejectedValue(new Error('Provider error')),
       };
 
-      // contextProvider.registerProvider is not a function
-      // contextProvider.registerProvider(invalidProvider);
-      // contextProvider.validateProviderConfiguration(); // Property 'validateProviderConfiguration' does not exist on type 'ContextProvider'.
+      contextProvider.providers = new Map([['Error', errorProvider]]);
 
-      // const logs = contextProvider.getLogHistory(); // Property 'getLogHistory' does not exist on type 'ContextProvider'.
-      // expect(logs).toContainEqual(
-      //   expect.objectContaining({
-      //     level: 'error',
-      //     message: 'Invalid provider category',
-      //   }),
-      // );
+      const context = await contextProvider.getAllContext(['Error']);
+      expect(context).toEqual({});
+    });
+  });
+
+  describe('logging', () => {
+    it('should log info messages', () => {
+      const message = 'Test info message';
+      contextProvider.info(message, {});
+      expect(outputChannel.appendLine).toHaveBeenCalled();
     });
 
-    it('should detect missing required methods', () => {
-      const invalidProvider = {
-      } as unknown as ContextDataProvider;
-
-      // contextProvider.registerProvider is not a function
-      // contextProvider.registerProvider(invalidProvider);
-      // contextProvider.validateProviderConfiguration(); // Property 'validateProviderConfiguration' does not exist on type 'ContextProvider'.
-
-      // const logs = contextProvider.getLogHistory(); // Property 'getLogHistory' does not exist on type 'ContextProvider'.
-      // expect(
-      //   logs.some(
-      //     (log) => log.level === 'error' && log.message === 'Provider missing isEnabled method', // Parameter 'log' implicitly has an 'any' type.
-      //   ),
-      // ).toBe(true);
-      // expect(
-      //   logs.some(
-      //     (log) => log.level === 'error' && log.message === 'Provider missing getContext method', // Parameter 'log' implicitly has an 'any' type.
-      //   ),
-      // ).toBe(true);
-    });
-
-    it('should validate onConfigurationChanged method when present', () => {
-      const invalidProvider = {
-        getContext: () => Promise.resolve({}), // Property 'getContext' does not exist on type 'ContextDataProvider'.
-      } as ContextDataProvider;
-
-      // contextProvider.registerProvider is not a function
-      // contextProvider.registerProvider(invalidProvider);
-      // contextProvider.validateProviderConfiguration(); // Property 'validateProviderConfiguration' does not exist on type 'ContextProvider'.
-
-      // const logs = contextProvider.getLogHistory(); // Property 'getLogHistory' does not exist on type 'ContextProvider'.
-      // expect(
-      //   logs.some(
-      //     (log) => log.level === 'error' && log.message === 'Invalid onConfigurationChanged method', // Parameter 'log' implicitly has an 'any' type.
-      //   ),
-      // ).toBe(true);
-    });
-
-    it('should call onConfigurationChanged when valid', () => {
-      const configChangeHandler = vi.fn();
-      const validProvider = {
-        getContext: () => Promise.resolve({}), // Property 'getContext' does not exist on type 'ContextDataProvider'.
-        onConfigurationChanged: configChangeHandler, // Property 'onConfigurationChanged' does not exist on type 'ContextDataProvider'.
-      };
-
-      // contextProvider.registerProvider is not a function
-      // contextProvider.registerProvider(validProvider);
-      // contextProvider.validateProviderConfiguration(); // Property 'validateProviderConfiguration' does not exist on type 'ContextProvider'.
-
-      // expect(configChangeHandler).toHaveBeenCalled();
-      // const logs = contextProvider.getLogHistory(); // Property 'getLogHistory' does not exist on type 'ContextProvider'.
-      // expect(
-      //   logs.some(
-      //     (log) => log.level === 'info' && log.message === 'Provider configuration updated', // Parameter 'log' implicitly has an 'any' type.
-      //   ),
-      // ).toBe(true);
+    it('should log debug messages', () => {
+      const message = 'Test debug message';
+      contextProvider.debug(message, {});
+      expect(outputChannel.appendLine).toHaveBeenCalled();
     });
   });
 });

@@ -7,8 +7,7 @@ module.exports = {
   entry: './src/extension.ts',
   output: {
     path: path.resolve(__dirname, 'out'),
-    filename: 'extension.js',
-    libraryTarget: 'commonjs2',
+    filename: 'extension.cjs',
     devtoolModuleFilenameTemplate: '../[resource-path]',
   },
   devtool: 'source-map',
@@ -19,7 +18,7 @@ module.exports = {
     },
   ],
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
@@ -33,8 +32,8 @@ module.exports = {
           {
             loader: 'ts-loader',
             options: {
-              transpileOnly: true,
-              experimentalWatchApi: true,
+              configFile: path.resolve(__dirname, 'tsconfig.json'),
+              // references: [{ path: './tsconfig.json' }], // Removed this line
             },
           },
         ],

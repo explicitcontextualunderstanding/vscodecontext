@@ -25,7 +25,11 @@ export class DevelopmentLogger implements Logger {
     return { ...this.context };
   }
 
-  private _writeLog(level: string, message: string, metadata?: Record<string, unknown>): void {
+  private _writeLog(
+    level: string,
+    message: string,
+    metadata?: Record<string, unknown>,
+  ): void {
     const output = `[${level}] ${message} ${JSON.stringify(metadata || {})}\n`;
     process.stdout.write(output);
   }

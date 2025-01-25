@@ -1,5 +1,6 @@
 import type { ContextEvent, ContextEventType } from './events.js';
 import * as vscode from 'vscode';
+import { ErrorLogger } from '../monitoring/errorLogger';
 
 /**
  * Configuration for event aggregation
@@ -34,11 +35,17 @@ export interface OutputAdapter {
   logMetrics(metrics: LoadMetrics): void;
 }
 
+const DEFAULT_CONFIG: AggregationConfig = {
+  batchWindow: 1000, // 1 second batch window
+  maxBatchSize: 100, // Maximum 100 events per batch
+  flushInterval: 5000, // Flush every 5 seconds
+};
+
 export class EventAggregator implements OutputAdapter {
-  private readonly eventQueue = new Map<ContextEventType, ContextEvent[]>();
-  private readonly strategies = new Map<ContextEventType, AggregationStrategy>();
-  private flushTimer: ReturnType<typeof globalThis.setInterval> | null = null;
+  private readonly eventQueue: Map<ContextEventType, ContextEvent[]>;
+  private readonly strategies: Map<ContextEventType, AggregationStrategy>;
   private readonly outputChannel: vscode.OutputChannel;
+  private flushTimer: ReturnType<typeof globalThis.setInterval> | null = null;
   private readonly loadMetrics: LoadMetrics = {
     queueSize: 0,
     maxProcessingTime: 0,
@@ -48,13 +55,13 @@ export class EventAggregator implements OutputAdapter {
   };
 
   constructor(
-    private readonly config: AggregationConfig,
+    private readonly config: AggregationConfig = DEFAULT_CONFIG,
     outputChannel?: vscode.OutputChannel,
   ) {
     this.eventQueue = new Map();
     this.strategies = new Map();
-    this.flushTimer = null;
-    this.outputChannel = outputChannel || vscode.window.createOutputChannel('Event Aggregator');
+    this.outputChannel =
+      outputChannel || vscode.window.createOutputChannel('Event Aggregator');
     this.startFlushTimer();
   }
   // OutputAdapter implementation
@@ -71,7 +78,10 @@ export class EventAggregator implements OutputAdapter {
   /**
    * Registers an aggregation strategy for a specific event type
    */
-  registerStrategy(eventType: ContextEventType, strategy: AggregationStrategy): void {
+  registerStrategy(
+    eventType: ContextEventType,
+    strategy: AggregationStrategy,
+  ): void {
     this.strategies.set(eventType, strategy);
   }
 
@@ -98,7 +108,9 @@ export class EventAggregator implements OutputAdapter {
    * Processes all queued events
    */
   flush(): void {
-    Array.from(this.eventQueue.keys()).forEach((type) => this.flushEventType(type));
+    Array.from(this.eventQueue.keys()).forEach((type) => {
+      this.flushEventType(type);
+    });
   }
 
   /**
@@ -108,22 +120,41 @@ export class EventAggregator implements OutputAdapter {
     return event.metadata.priority === 'high' || event.type.includes('ERROR');
   }
 
+  private updateMetrics(processingTime: number): void {
+    this.loadMetrics.maxProcessingTime = Math.max(
+      this.loadMetrics.maxProcessingTime,
+      processingTime,
+    );
+
+    const totalEvents = this.loadMetrics.eventsProcessed + 1;
+    const currentTotal =
+      this.loadMetrics.avgProcessingTime * this.loadMetrics.eventsProcessed;
+
+    this.loadMetrics.avgProcessingTime =
+      (currentTotal + processingTime) / totalEvents;
+  }
+
   /**
    * Processes a single event
    */
   private processEvent(event: ContextEvent): void {
     const startTime = Date.now();
-    this.outputChannel.appendLine(`Processing event: ${event.type}`);
-    this.outputChannel.appendLine(JSON.stringify(event, null, 2));
-    const processingTime = Date.now() - startTime;
-    this.loadMetrics.maxProcessingTime = Math.max(
-      this.loadMetrics.maxProcessingTime,
-      processingTime,
-    );
-    this.loadMetrics.avgProcessingTime =
-      (this.loadMetrics.avgProcessingTime * this.loadMetrics.eventsProcessed + processingTime) /
-      (this.loadMetrics.eventsProcessed + 1);
-    this.logMetrics(this.loadMetrics);
+    try {
+      this.outputChannel.appendLine(`Processing event: ${event.type}`);
+      this.outputChannel.appendLine(JSON.stringify(event, null, 2));
+      this.loadMetrics.eventsProcessed++;
+
+      const processingTime = Date.now() - startTime;
+      this.updateMetrics(processingTime);
+      this.logMetrics(this.loadMetrics);
+    } catch (error) {
+      this.loadMetrics.eventsDropped++;
+      const errorLogger = new ErrorLogger(this.outputChannel);
+      errorLogger.logError(
+        error instanceof Error ? error : new Error(String(error)),
+        'EventProcessingError',
+      );
+    }
   }
 
   /**

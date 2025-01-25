@@ -2,12 +2,12 @@
  * Represents a logging interface with structured logging capabilities
  */
 export interface Logger {
-    /**
-     * Logs an informational message with optional metadata
-     * @param message - The log message
-     * @param metadata - Optional structured data to include with the log
-     */
-    info: (message: string, metadata?: object) => void;
+  /**
+   * Logs an informational message with optional metadata
+   * @param message - The log message
+   * @param metadata - Optional structured data to include with the log
+   */
+  info: (message: string, metadata?: object) => void;
 }
 /**
  * Type guard to check if a value is an Error object
@@ -27,7 +27,7 @@ export declare function isObject(value: unknown): value is object;
  * Type guard to check if a value is an object with a message property
  */
 export declare function isObjectWithMessage(value: unknown): value is {
-    message: string;
+  message: string;
 };
 /**
  * Safely cast unknown error to Error type

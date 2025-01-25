@@ -1,0 +1,19 @@
+# Code Mode Rules
+
+# Rules for TypeScript Compiler Errors and ESLint Linting Issues
+
+rule "typescript_compiler_error" {
+    match "error TS\\d+"
+    message "TypeScript compiler error found. Please fix the error."
+}
+
+rule "eslint_linting_error" {
+    match "eslint\\d+"
+    message "ESLint linting error found. Please fix the error."
+}
+
+rule "checklist_status" {
+    match "session_start"
+    command "node scripts/checklist-status.js"
+    message "Running implementation status check..."
+}

@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 
 import * as vscode from 'vscode';
 
-import { withErrorHandling } from '../utils/errorUtils.js';
+import { withErrorHandling } from '../utils/errorUtils';
 
 export class WebviewProvider implements vscode.WebviewViewProvider {
   private readonly _extensionUri: vscode.Uri;
@@ -10,7 +10,9 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
-    this._outputChannel = vscode.window.createOutputChannel('VSCode Context Webview');
+    this._outputChannel = vscode.window.createOutputChannel(
+      'VSCode Context Webview',
+    );
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
@@ -36,7 +38,9 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
     const scriptUri = webview
-      .asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src/webview/media', 'main.js'))
+      .asWebviewUri(
+        vscode.Uri.joinPath(this._extensionUri, 'src/webview/media', 'main.js'),
+      )
       .toString();
 
     // Use a nonce to only allow a specific script to be run.
@@ -60,14 +64,17 @@ export class WebviewProvider implements vscode.WebviewViewProvider {
   }
 
   public handleMessage(message: unknown): void {
-    this._outputChannel.appendLine(`Received webview message: ${JSON.stringify(message)}`);
+    this._outputChannel.appendLine(
+      `Received webview message: ${JSON.stringify(message)}`,
+    );
   }
 }
 
 function getNonce(): string {
   // Generate cryptographically secure random bytes (32 bytes = 256 bits)
   const bytes = crypto.randomBytes(32);
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const possible =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return Array.from(bytes)
     .map((byte) => possible[byte % possible.length])
     .join('');

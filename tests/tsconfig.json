@@ -1,22 +1,21 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "types": ["node", "vscode", "vitest/globals"],
-    "rootDir": ".",
+    "rootDir": "..",
+    "noEmit": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "vscode": ["__mocks__/vscode"],
+      "@/*": ["../src/*"]
+    },
+    "baseUrl": ".",
     "outDir": "../out/test",
-    "strict": true,
-    "composite": true,
-    "noImplicitAny": false
+    "skipLibCheck": true
   },
-  "include": [
-    ".",
-    "../src/**/*"
-  ],
-  "references": [
-    {
-      "path": ".."
-    }
-  ]
+  "include": ["**/*.ts", "../src/**/*", "../package.json"],
+  "exclude": ["node_modules", ".vscode-test", "integration/**/*"]
 }

@@ -1,0 +1,30 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.alwaysShowStatus": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "sonarlint.connectedMode.project": {
+    "connectionId": "explicitcontextualunderstanding",
+    "projectKey": "vscodecontext"
+  },
+  "alrunner.problemsToProcess": [
+    {
+      "name": "Export Problems",
+      "problemMatchers": [".*"],
+      "commands": [
+        {
+          "command": "echo",
+          "args": ["${problemJson}"]
+        }
+      ]
+    }
+  ]
+}

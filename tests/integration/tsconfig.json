@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "sourceMap": true,
+    "rootDir": "../..",
+    "strict": true,
+    "moduleResolution": "node",
+    "types": ["node", "vscode"],
+    "outDir": "../../out",
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "*.js"]
+    }
+  },
+  "include": ["**/*", "../../package.json"],
+  "exclude": ["node_modules", ".vscode-test"]
+}

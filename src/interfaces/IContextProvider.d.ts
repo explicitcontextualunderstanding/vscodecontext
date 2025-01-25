@@ -1,18 +1,18 @@
 export interface ContextData {
-    [key: string]: unknown;
+  [key: string]: unknown;
 }
 export interface IContextProvider {
-    getAllContext(categories: string[]): Promise<ContextData>;
-    triggerContextExtraction(): void;
+  getAllContext(categories: string[]): Promise<ContextData>;
+  triggerContextExtraction(): void;
 }
 export interface ContextDataProvider {
-    getContext(): Promise<Record<string, unknown>>;
+  getContext(): Promise<Record<string, unknown>>;
 }
 export declare enum ContextCategory {
-    Editor = "Editor",
-    Terminal = "Terminal",
-    Workspace = "Workspace",
-    Debug = "Debug",
-    SCM = "SCM",
-    Tasks = "Tasks"
+  Editor = 'Editor',
+  Terminal = 'Terminal',
+  Workspace = 'Workspace',
+  Debug = 'Debug',
+  SCM = 'SCM',
+  Tasks = 'Tasks',
 }

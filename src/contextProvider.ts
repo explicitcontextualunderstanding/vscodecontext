@@ -1,126 +1,275 @@
-import { EventEmitter } from 'events';
-import type { ContextData } from './interfaces/ContextProviderInterface';
+import {
+  type ConfigurationChangeEvent,
+  type Disposable,
+  type ExtensionContext,
+  type TextDocument,
+  type TextDocumentChangeEvent,
+  type TextEditor,
+  type TextEditorOptionsChangeEvent,
+  type TextEditorSelectionChangeEvent,
+  type TextEditorViewColumnChangeEvent,
+  type TextEditorVisibleRangesChangeEvent,
+  type WorkspaceFoldersChangeEvent,
+  window,
+  workspace,
+} from 'vscode';
 import type { IContextProvider } from './interfaces/IContextProvider';
+import { EventAggregator } from './providers/eventAggregator';
+import { type ContextProviderConfig } from './providers/contextContracts';
+import {
+  DebugContextProvider,
+  type DebugContext,
+} from './providers/DebugContextProvider';
+import {
+  EditorContextProvider,
+  type EditorContext,
+} from './providers/EditorContextProvider';
+import {
+  ExtensionHostContextProvider,
+  type ExtensionHostContext,
+} from './providers/ExtensionHostContextProvider';
+import {
+  SCMContextProvider,
+  type SCMContext,
+} from './providers/SCMContextProvider';
+import {
+  TasksContextProvider,
+  type TasksContext,
+} from './providers/TasksContextProvider';
+import {
+  TerminalContextProvider,
+  type TerminalContext,
+} from './providers/TerminalContextProvider';
+import {
+  WorkspaceContextProvider,
+  type WorkspaceContext,
+} from './providers/WorkspaceContextProvider';
+import { ProviderManager } from './providers/ProviderManager';
+import { ContextCategory } from './providers/contextContracts'; // Import ContextCategory
 
-/**
- * Event emitted when context extraction is requested
- */
-export const EXTRACT_REQUEST = 'EXTRACT_REQUEST';
+export type ContextData = {
+  editor?: EditorContext;
+  workspace?: WorkspaceContext;
+  scm?: SCMContext;
+  debug?: DebugContext;
+  tasks?: TasksContext;
+  terminal?: TerminalContext;
+  extensionHost?: ExtensionHostContext;
+};
 
-import * as vscode from 'vscode';
+export class ContextProvider implements IContextProvider {
+  // Implement IContextProvider
+  readonly category = ContextCategory.Workspace; // Corrected category to Workspace
+  config!: ContextProviderConfig; // Add config property
+  private eventAggregator: EventAggregator;
+  private providerManager: ProviderManager;
 
-/**
- * Core provider class that manages VS Code context gathering.
- * Implements the Configurable Context Providers pattern and acts as the main
- * coordinator for all context-related operations.
- *
- * This class:
- * - Coordinates context gathering from various providers
- * - Manages terminal lifecycle tracking
- * - Handles context extraction requests
- * - Provides logging capabilities
- *
- * Extends EventEmitter to support event-based communication
- * for context updates and extraction requests.
- */
-export class ContextProvider extends EventEmitter implements IContextProvider {
-  /** Channel for logging operations and debug information */
-  private readonly outputChannel: vscode.OutputChannel;
+  constructor(
+    config: ContextProviderConfig,
+    extensionContext: ExtensionContext,
+  ) {
+    this.config = config;
+    this.eventAggregator = new EventAggregator();
+    this.providerManager = new ProviderManager([
+      new EditorContextProvider(),
+      new WorkspaceContextProvider(
+        window.createOutputChannel('WorkspaceContext'),
+      ), // Pass output channel
+      new TerminalContextProvider(this.eventAggregator), // Pass eventAggregator
+      new TasksContextProvider(),
+      new DebugContextProvider(window.createOutputChannel('DebugContext')), // Pass output channel
+      new ExtensionHostContextProvider(),
+      new SCMContextProvider(), // Instantiate SCMContextProvider
+    ]);
 
-  /**
-   * Creates a new ContextProvider instance
-   * @param outputChannel VS Code output channel for logging
-   */
-  constructor(outputChannel: vscode.OutputChannel) {
-    super();
-    this.outputChannel = outputChannel;
+    this.registerEventListeners(extensionContext);
   }
-  /**
-   * Retrieves context data for specified categories
-   * Part of the Configurable Context Providers pattern
-   *
-   * @param categories Array of context categories to gather (e.g., ['workspace', 'editor'])
-   * @returns Promise resolving to context data for requested categories
-   */
-  async getAllContext(categories: string[]): Promise<ContextData> {
-    // Use categories parameter to avoid ESLint error
-    const contextData: ContextData = {};
-    categories.forEach((category) => {
-      contextData[category] = {}; // Placeholder implementation
+
+  private registerEventListeners(extensionContext: ExtensionContext): void {
+    const disposables: Disposable[] = [];
+
+    // Register workspace events
+    disposables.push(
+      workspace.onDidChangeConfiguration(this.onConfigurationChange.bind(this)),
+    );
+    disposables.push(
+      workspace.onDidChangeWorkspaceFolders(
+        this.onWorkspaceFoldersChange.bind(this),
+      ),
+    );
+    disposables.push(
+      workspace.onDidSaveTextDocument(this.onTextDocumentSave.bind(this)),
+    );
+    disposables.push(
+      workspace.onDidOpenTextDocument(this.onTextDocumentOpen.bind(this)),
+    );
+    disposables.push(
+      workspace.onDidCloseTextDocument(this.onTextDocumentClose.bind(this)),
+    );
+    disposables.push(
+      workspace.onDidChangeTextDocument(this.onTextDocumentChange.bind(this)),
+    );
+
+    // Register editor events
+    disposables.push(
+      window.onDidChangeActiveTextEditor(
+        this.onActiveTextEditorChange.bind(this),
+      ),
+    );
+    disposables.push(
+      window.onDidChangeVisibleTextEditors(
+        this.onVisibleTextEditorsChange.bind(this),
+      ),
+    );
+    disposables.push(
+      window.onDidChangeTextEditorSelection(
+        this.onTextEditorSelectionChange.bind(this),
+      ),
+    );
+    disposables.push(
+      window.onDidChangeTextEditorVisibleRanges(
+        this.onTextEditorVisibleRangesChange.bind(this),
+      ),
+    );
+    disposables.push(
+      window.onDidChangeTextEditorOptions(
+        this.onTextEditorOptionsChange.bind(this),
+      ),
+    );
+    disposables.push(
+      window.onDidChangeTextEditorViewColumn(
+        this.onTextEditorViewColumnChange.bind(this),
+      ),
+    );
+
+    // Register the disposables
+    extensionContext.subscriptions.push(...disposables);
+  }
+
+  private onConfigurationChange(event: ConfigurationChangeEvent): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: event,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
     });
-    return contextData;
   }
 
-  /**
-   * Triggers a context extraction event
-   * Emits an EXTRACT_REQUEST event to notify listeners that new context should be gathered
-   * This is used to initiate context updates when workspace or editor state changes
-   */
+  private onWorkspaceFoldersChange(event: WorkspaceFoldersChangeEvent): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: event,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextDocumentSave(document: TextDocument): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: document,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextDocumentOpen(document: TextDocument): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: document,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextDocumentClose(document: TextDocument): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: document,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextDocumentChange(event: TextDocumentChangeEvent): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: event,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onActiveTextEditorChange(editor: TextEditor | undefined): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: editor,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onVisibleTextEditorsChange(editors: readonly TextEditor[]): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: editors,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextEditorSelectionChange(
+    event: TextEditorSelectionChangeEvent,
+  ): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: event,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextEditorVisibleRangesChange(
+    event: TextEditorVisibleRangesChangeEvent,
+  ): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: event,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextEditorOptionsChange(event: TextEditorOptionsChangeEvent): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: event,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  private onTextEditorViewColumnChange(
+    event: TextEditorViewColumnChangeEvent,
+  ): void {
+    this.eventAggregator.queueEvent({
+      type: 'state_change', // Corrected event type
+      payload: event,
+      metadata: { source: 'vscode-context', timestamp: Date.now() }, // Added metadata
+    });
+  }
+
+  configure(config: ContextProviderConfig): void {
+    // Implement configure method
+    this.config = config;
+  }
+  async initialize(): Promise<void> {
+    // Implement initialize method
+    return this.providerManager.initialize();
+  }
   triggerContextExtraction(): void {
-    // Implementation here
+    // Implement triggerContextExtraction method
+    // this.providerManager.triggerContextExtraction(); // Removed incorrect call
+  }
+  async getAllContext(_categories: string[]): Promise<ContextData> {
+    // Implement getAllContext method
+    return this.providerManager.getContext();
   }
 
-  /**
-   * Initializes terminal tracking system
-   * Sets up event listeners for terminal lifecycle events (creation, deletion)
-   * and begins collecting terminal history and metadata.
-   * Part of the terminal context gathering functionality described in the architecture.
-   */
-  startTrackingTerminals(): void {
-    // Implementation here
+  public async getContext(): Promise<ContextData> {
+    return this.providerManager.getContext();
   }
 
-  /**
-   * Logs informational messages and structured data to the output channel
-   * Provides a consistent logging interface for context-related operations
-   *
-   * @param message The message to log
-   * @param data Optional structured data to log as formatted JSON
-   */
-  info(message: string, data?: Record<string, unknown>): void {
-    this.outputChannel.appendLine(message);
-    if (data) {
-      this.outputChannel.appendLine(JSON.stringify(data, null, 2));
-    }
-  }
-
-  /**
-   * Gathers context data for all categories
-   * @returns Promise resolving to context data for all categories
-   * @description Gathers context data for all categories
-   */
-  public async gatherContext(): Promise<ContextData> {
-    const contextData: ContextData = {
-      Editor: {
-        activeTextEditor: vscode.window.activeTextEditor,
-        selections: vscode.window.activeTextEditor?.selections,
-        visibleTextEditors: vscode.window.visibleTextEditors,
-      },
-      Terminal: {
-        activeTerminal: vscode.window.activeTerminal,
-        allTerminals: vscode.window.terminals,
-      },
-      Workspace: {
-        workspaceFolders: vscode.workspace.workspaceFolders,
-        workspaceConfiguration: vscode.workspace.getConfiguration(),
-      },
-      Debug: {
-        activeDebugSessions: vscode.debug.activeDebugSession,
-        breakpoints: vscode.debug.breakpoints,
-      },
-      SCM: {
-        repositories:
-          vscode.workspace.workspaceFolders?.map((folder) => ({
-            name: folder.name,
-            uri: folder.uri,
-          })) || [],
-        commitDetails: [], // Placeholder for commit details
-      },
-      Tasks: {
-        taskConfigurations: vscode.tasks.taskExecutions,
-        taskStatuses: [], // Placeholder for task statuses
-      },
-    };
-    return contextData;
+  public dispose(): void {
+    this.eventAggregator.dispose();
   }
 }

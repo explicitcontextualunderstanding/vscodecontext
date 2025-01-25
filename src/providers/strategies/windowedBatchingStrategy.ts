@@ -1,5 +1,9 @@
 /* global clearTimeout */
-import type { AggregationStrategy, ContextEvent, EventMetadata } from '../events.js';
+import type {
+  AggregationStrategy,
+  ContextEvent,
+  EventMetadata,
+} from '../events.js';
 
 export class WindowedBatchingStrategy implements AggregationStrategy {
   private buffer: Array<ContextEvent<unknown>> = [];

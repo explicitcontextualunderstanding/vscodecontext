@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { VSCodeContextError } from '../errors/VSCodeContextError.js';
-import { ErrorLogger } from './errorLogger.js';
-import type { ErrorMetrics, ErrorPattern } from './types.js';
+import { VSCodeContextError } from '../errors/VSCodeContextError';
+import { ErrorLogger } from './errorLogger';
+import type { ErrorMetrics, ErrorPattern } from './types';
 
 export class ErrorMonitor {
   private static instance: ErrorMonitor;
@@ -13,7 +13,9 @@ export class ErrorMonitor {
   };
 
   private constructor() {
-    const channel = vscode.window.createOutputChannel('VSCode Context Error Monitor');
+    const channel = vscode.window.createOutputChannel(
+      'VSCode Context Error Monitor',
+    );
     this.logger = new ErrorLogger(channel);
   }
 
@@ -39,7 +41,10 @@ export class ErrorMonitor {
     this.errorMetrics.clear();
   }
 
-  private updateMetrics(errorCode: string, context?: Record<string, unknown>): ErrorMetrics {
+  private updateMetrics(
+    errorCode: string,
+    context?: Record<string, unknown>,
+  ): ErrorMetrics {
     const currentMetrics = this.errorMetrics.get(errorCode) || {
       count: 0,
       lastOccurrence: new Date(),

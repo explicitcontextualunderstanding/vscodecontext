@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import type { ContextDataProvider } from '../interfaces/IContextProvider';
-import { ContextCategory } from '../interfaces/IContextProvider';
 /**
  * Manages and provides context information about VS Code integrated terminals.
  * This provider tracks:
@@ -13,26 +12,26 @@ import { ContextCategory } from '../interfaces/IContextProvider';
  * can be enabled/disabled through VS Code settings.
  */
 export declare class TerminalContextProvider implements ContextDataProvider {
-    /** Identifies this provider's context category */
-    readonly category = ContextCategory.Terminal;
-    /** Maintains list of all active terminals */
-    private readonly terminals;
-    constructor();
-    private onDidOpenTerminal;
-    private onDidCloseTerminal;
-    private onDidChangeActiveTerminal;
-    getContext(): Promise<Record<string, unknown>>;
-    getTerminalData(): {
-        terminal: vscode.Terminal;
-        creationTime: Date;
-        lastActivity: Date;
-        inputCount: number;
-        outputCount: number;
-        totalLifetime: number;
-    }[];
-    /**
-     * Checks if terminal context gathering is enabled in settings
-     * @returns true if terminal context gathering is enabled
-     */
-    isEnabled(): boolean;
+  /** Identifies this provider's context category */
+  readonly category: any;
+  /** Maintains list of all active terminals */
+  private readonly terminals;
+  constructor();
+  private onDidOpenTerminal;
+  private onDidCloseTerminal;
+  private onDidChangeActiveTerminal;
+  getContext(): Promise<Record<string, unknown>>;
+  getTerminalData(): {
+    terminal: vscode.Terminal;
+    creationTime: Date;
+    lastActivity: Date;
+    inputCount: number;
+    outputCount: number;
+    totalLifetime: number;
+  }[];
+  /**
+   * Checks if terminal context gathering is enabled in settings
+   * @returns true if terminal context gathering is enabled
+   */
+  isEnabled(): boolean;
 }
