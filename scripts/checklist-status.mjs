@@ -1,13 +1,31 @@
 // scripts/checklist-status.js
 import { getChecklistProgress } from '../lib/checklist-parser.mjs';
 import { existsSync } from 'fs';
-import path, { join, resolve } from 'path';
+import { join } from 'path';
 import { homedir } from 'os';
 
 // Function to convert full path to tilde path
 function toTildePath(fullPath) {
   const home = homedir();
   return fullPath.startsWith(home) ? fullPath.replace(home, '~') : fullPath;
+}
+
+function getDocsPathValue(arg) {
+  if (!arg || typeof arg !== 'string' || arg.indexOf('=') === -1) {
+    return null; // Or throw an error, depending on requirements.
+  }
+
+  const parts = arg.split('=');
+  if (parts.length < 2) {
+    return null;
+  }
+
+  let docsPathValue = parts[1];
+  if (docsPathValue) {
+    docsPathValue = docsPathValue.trim().replace(/^(['"]|["'])$/g, '');
+  }
+
+  return docsPathValue;
 }
 
 /**
@@ -32,7 +50,7 @@ let DOCS_PATH = join(process.cwd(), 'docs'); // Default to project's docs direct
 let docsPathValue;
 for (const arg of process.argv) {
   if (arg.startsWith('--docs-path=')) {
-    docsPathValue = arg.split('=')[1].replace(/^['"]|['"]$/g, ''); // Remove surrounding quotes
+    docsPathValue = getDocsPathValue(arg);
     break;
   } else if (arg === '--docs-path') {
     docsPathValue = process.argv[process.argv.indexOf(arg) + 1];
@@ -44,7 +62,7 @@ if (docsPathValue) {
   // Handle home directory expansion and resolve absolute path
   const expandedPath = docsPathValue.startsWith('~')
     ? docsPathValue.replace('~', homedir())
-    : path.resolve(docsPathValue);
+    : join(docsPathValue);
   DOCS_PATH = expandedPath;
 
   if (!existsSync(DOCS_PATH)) {
@@ -111,21 +129,19 @@ async function validateRepositories() {
   console.log('Repository and Document Validation Successful:');
   console.log('✅ VSCode Context:');
   console.log(`   Path: ${toTildePath(VSCODE_CONTEXT_PATH)}`);
+  const { exec } = await import('child_process');
   const vscodeContextRemoteUrl = await new Promise((resolve) => {
-    import('child_process').then((child_process) => {
-      const { exec } = child_process;
-      exec(
-        `cd ${VSCODE_CONTEXT_PATH} && git remote get-url origin`,
-        (error, stdout, stderr) => {
-          if (error) {
-            console.error(`exec error: ${error}`);
-            resolve('Could not determine remote URL');
-            return;
-          }
-          resolve(stdout.trim());
-        },
-      );
-    });
+    exec(
+      `cd ${VSCODE_CONTEXT_PATH} && git remote get-url origin`,
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          resolve('Could not determine remote URL');
+          return;
+        }
+        resolve(stdout.trim());
+      },
+    );
   });
 
   // Single URL display for VSCode Context
@@ -142,7 +158,6 @@ async function validateRepositories() {
   if (existsSync(ARCHITECTURE_DOC_PATH)) {
     console.log(`     - Found architecture document: ${ARCHITECTURE_DOC}`);
   }
-  //console.log(`     - Architecture: ${ARCHITECTURE_DOC}`);
   console.log(''); // Empty line for spacing
 }
 
@@ -182,14 +197,14 @@ function displayImplementationStatus(progress, showOnlyIncomplete) {
     incompleteSubsections.forEach((subsection) => {
       console.log(`    ${subsection.title}:`);
       subsection.items.forEach((item) => {
-        const statusIcon =
-          item.status === 'completed'
-            ? '✅'
-            : item.status === 'not implemented'
-              ? '❌'
-              : item.status === 'partially implemented'
-                ? '⚠️'
-                : '';
+        let statusIcon = '';
+        if (item.status === 'completed') {
+          statusIcon = '✅';
+        } else if (item.status === 'not implemented') {
+          statusIcon = '❌';
+        } else if (item.status === 'partially implemented') {
+          statusIcon = '⚠️';
+        }
         console.log(`      ${statusIcon} ${item.description} (${item.status})`);
       });
     });
