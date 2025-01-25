@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "prepare": "husky install",
     "status": "node scripts/checklist-status.mjs",
-    "status:todo": "node scripts/checklist-status.mjs --incomplete"
+    "status:todo": "node scripts/checklist-status.mjs --incomplete",
+    "sonar": "cross-env npx sonarqube-scanner -Dsonar.organization=explicitcontextualunderstanding -Dsonar.projectKey=vscodecontext"
   },
   "contributes": {
     "commands": [
