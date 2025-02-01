@@ -4,33 +4,64 @@ import { TerminalService } from '../../src/services/TerminalService';
 import { MockTerminal } from '../__mocks__/mockTerminal';
 import { MockTerminalFactory } from '../__mocks__/mockTerminalFactory';
 
-// Mock vscode namespace
-jest.mock('vscode', () => ({
-  Uri: {
-    file: (path: string) => ({ scheme: 'file', path }),
-  },
+interface MockVSCode {
   window: {
+    createOutputChannel: jest.Mock;
+    activeTerminal: vscode.Terminal | undefined;
+  };
+  Uri: {
+    file: (path: string) => { scheme: string; path: string };
+  };
+  MarkdownString: jest.Mock;
+  LanguageModelToolResult: jest.Mock;
+  LanguageModelTextPart: jest.Mock;
+  __setActiveTerminal: (terminal: vscode.Terminal | undefined) => void;
+}
+
+// Mock vscode namespace
+jest.mock('vscode', () => {
+  let currentTerminal: vscode.Terminal | undefined;
+  const mockWindow = {
     createOutputChannel: jest.fn(),
-    activeTerminal: undefined,
-  },
-  LanguageModelToolResult: jest.fn(function (this: { parts: unknown[] }, parts: unknown[]) {
-    this.parts = parts;
-  }),
-  LanguageModelTextPart: jest.fn(function (this: { text: string }, text: string) {
-    this.text = text;
-  }),
-}));
+    get activeTerminal() {
+      return currentTerminal;
+    },
+  };
+
+  return {
+    window: mockWindow,
+    Uri: {
+      file: (path: string) => ({ scheme: 'file', path }),
+    },
+    MarkdownString: jest.fn(function (this: { value: string }, text: string) {
+      this.value = text;
+    }),
+    LanguageModelToolResult: jest.fn(function (this: { parts: unknown[] }, parts: unknown[]) {
+      this.parts = parts;
+      return this;
+    }),
+    LanguageModelTextPart: jest.fn(function (this: { text: string }, text: string) {
+      this.text = text;
+      return this;
+    }),
+    // Helper for tests to set the terminal
+    __setActiveTerminal: (terminal: vscode.Terminal | undefined) => {
+      currentTerminal = terminal;
+    },
+  };
+});
 
 describe('TerminalService', () => {
   let terminalService: TerminalService;
   let mockOutputChannel: {
-    appendLine: jest.MockedFunction<(value: string) => void>;
-    clear: jest.MockedFunction<() => void>;
-    dispose: jest.MockedFunction<() => void>;
-    hide: jest.MockedFunction<() => void>;
+    appendLine: jest.Mock;
+    clear: jest.Mock;
+    dispose: jest.Mock;
+    hide: jest.Mock;
     name: string;
-    show: jest.MockedFunction<() => void>;
+    show: jest.Mock;
   };
+  let mockedVSCode: MockVSCode;
 
   beforeEach(() => {
     // Reset all mocks
@@ -46,17 +77,20 @@ describe('TerminalService', () => {
       show: jest.fn(),
     };
 
+    // Set up mocked VS Code module
+    mockedVSCode = vscode as unknown as MockVSCode;
+
     // Mock createOutputChannel
-    (vscode.window.createOutputChannel as jest.Mock).mockReturnValue(mockOutputChannel);
+    mockedVSCode.window.createOutputChannel = jest.fn().mockReturnValue(mockOutputChannel);
+
+    // Reset active terminal
+    mockedVSCode.__setActiveTerminal(undefined);
 
     terminalService = new TerminalService();
   });
 
   describe('getActiveTerminalContext', () => {
     it('should return null when no active terminal exists', () => {
-      // Mock no active terminal
-      jest.spyOn(vscode.window, 'activeTerminal', 'get').mockReturnValue(undefined);
-
       const result = terminalService.getActiveTerminalContext();
       expect(result).toBeNull();
     });
@@ -64,7 +98,7 @@ describe('TerminalService', () => {
     it('should return terminal metadata when active terminal exists', async () => {
       // Create mock active terminal
       const mockTerminal = MockTerminalFactory.createActive();
-      jest.spyOn(vscode.window, 'activeTerminal', 'get').mockReturnValue(mockTerminal);
+      mockedVSCode.__setActiveTerminal(mockTerminal);
 
       const result = terminalService.getActiveTerminalContext();
 
@@ -80,8 +114,6 @@ describe('TerminalService', () => {
 
   describe('getActiveTerminalContextForTool', () => {
     it('should return "no terminal" message when no active terminal', async () => {
-      jest.spyOn(vscode.window, 'activeTerminal', 'get').mockReturnValue(undefined);
-
       const result = await terminalService.getActiveTerminalContextForTool();
       const toolResult = result as unknown as { parts: Array<{ text: string }> };
 
@@ -95,7 +127,7 @@ describe('TerminalService', () => {
         true,
         '/usr/bin/zsh',
       );
-      jest.spyOn(vscode.window, 'activeTerminal', 'get').mockReturnValue(mockTerminal);
+      mockedVSCode.__setActiveTerminal(mockTerminal);
 
       const result = await terminalService.getActiveTerminalContextForTool();
       const toolResult = result as unknown as { parts: Array<{ text: string }> };
@@ -119,7 +151,7 @@ describe('TerminalService', () => {
         },
       });
 
-      jest.spyOn(vscode.window, 'activeTerminal', 'get').mockReturnValue(mockTerminal);
+      mockedVSCode.__setActiveTerminal(mockTerminal);
 
       const result = terminalService.getActiveTerminalContext();
 
